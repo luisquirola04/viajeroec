@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     info: { type: DataTypes.STRING },
     imagen: { type: DataTypes.STRING },
     estado: {type: DataTypes.BOOLEAN},
-    uuid: {type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4,allowNull: false,unique: true,}
+    external: {type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4,allowNull: false,unique: true,}
     
   };
 };

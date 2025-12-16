@@ -12,7 +12,7 @@ const Lugar = sequelize.define(
     activo: { type: DataTypes.BOOLEAN },
     horario: { type: DataTypes.STRING(50) },
     imagen: { type: DataTypes.JSON },
-    uuid: {
+    external: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       allowNull: false,

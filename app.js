@@ -5,8 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const cors = require('cors')
 const bodyParser = require('body-parser');
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+
 const sequelize = require('./config/config');
 
 //clases
@@ -45,7 +44,7 @@ const Lugar= require('./models/lugar');
 
 
 // routes
-var paisRouter = require('./routes/pais');
+var paisRouter = require('./routes/paisRoutes');
 
 
 
@@ -72,9 +71,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 console.log('--- DEBUG PAIS ROUTER ---');
 console.log(paisRouter);
 console.log('-------------------------');
+
+
+
+
 app.use('/pais', paisRouter);
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
