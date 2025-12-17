@@ -43,9 +43,6 @@ const Lugar= require('./models/lugar');
 
 
 
-// routes
-var paisRouter = require('./routes/paisRoutes');
-
 
 
 var app = express();
@@ -74,8 +71,26 @@ console.log('-------------------------');
 
 
 
+// routes
+var paisRouter = require('./routes/paisRoutes');
+var provinciaRouter = require('./routes/provinciaRoutes');
+var cantonRouter = require('./routes/cantonRoutes');
+var parroquiaRouter  = require('./routes/parroquiaRoutes');
+var categoriaRouter  = require('./routes/categoriaRoutes');
+var lugarRouter  = require('./routes/lugarRoutes');
 
 app.use('/pais', paisRouter);
+app.use('/provincia', provinciaRouter);
+app.use('/parroquia', parroquiaRouter);
+app.use('/lugar', lugarRouter);
+app.use('/categoria', categoriaRouter);
+app.use('/canton', cantonRouter);
+
+
+
+
+
+
 
 
 // catch 404 and forward to error handler

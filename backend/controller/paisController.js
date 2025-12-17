@@ -9,6 +9,7 @@ class PaisController {
       const paises = await Pais.findAll({ where: { estado: true } });
       console.log("aaaa" + paises);
       return res.status(200).json({
+        code:200,
         paises,
       });
     } catch (error) {
@@ -32,7 +33,7 @@ class PaisController {
         imagen,
         estado: true,
       });
-      return res.status(200).json({ msj: "Pais creado correctamente" });
+      return res.status(200).json({ msj: "Pais creado correctamente" , code: 200});
     } catch (error) {
       console.log(error.message);
       return res.status(400).json({ msj: "Hubo un error al crear el pais" });
@@ -50,7 +51,7 @@ class PaisController {
         imagen:imagen,
         estado: true,
       });
-      return res.status(200).json({ msj: "Pais creado correctamente" });
+      return res.status(200).json({ msj: "Pais creado correctamente", code:200 });
     } catch (error) {
       console.log(error.message);
       return res.status(400).json({ msj: "Hubo un error al crear el pais" });

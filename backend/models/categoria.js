@@ -6,11 +6,10 @@ const Categoria= sequelize.define('Categoria',{
     nombre: {type:DataTypes.STRING(50)},
         external: {type:DataTypes.UUID, defaultValue:DataTypes.UUIDV4,allowNull: false,
         unique: true,},
+            estado: {type: DataTypes.BOOLEAN},
 
     },
     { tableName: 'categoria',
-        defaultScope: {
-      attributes: { exclude: ["id"] }, 
-    },
+        
        
 }); module.exports = Categoria

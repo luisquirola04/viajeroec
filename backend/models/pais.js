@@ -8,7 +8,5 @@ const sequelize = require('../config/config');
     ...UbicacionAtributos(sequelize, DataTypes), 
   }, {
     tableName: 'pais',
-    defaultScope: {
-      attributes: { exclude: ["id"] }, 
-    },
+    
   }); module.exports = Pais;

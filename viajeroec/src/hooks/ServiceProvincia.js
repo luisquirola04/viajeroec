@@ -1,0 +1,24 @@
+import { PATCH, POST } from "./Connection";
+import { GET } from "./Connection";
+
+export async function registroProvincia(data) {
+  let datos = null;
+  try {
+    datos = await POST("/provincia/crear", data);
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+
+  return datos;
+}
+export async function listarProvincia(token) {
+  let datos = null;
+  try {
+    datos = await GET("/provincia/get", token);
+  } catch (error) {
+    return error;
+  }
+  console.log(datos.data);
+  return datos.data;
+}
