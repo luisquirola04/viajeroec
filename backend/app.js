@@ -15,6 +15,7 @@ const Parroquia= require('./models/parroquia');
 const Canton= require('./models/canton');
 const Categoria= require('./models/categoria');
 const Lugar= require('./models/lugar');
+const Cuenta= require('./models/cuenta');
 
 //relaciones de clases
 
@@ -47,7 +48,7 @@ const Lugar= require('./models/lugar');
 
 var app = express();
 
-sequelize.sync()
+sequelize.sync({ alter: true })
     .then(() => {
         console.log('Base de datos sincronizada');
     })
@@ -78,6 +79,7 @@ var cantonRouter = require('./routes/cantonRoutes');
 var parroquiaRouter  = require('./routes/parroquiaRoutes');
 var categoriaRouter  = require('./routes/categoriaRoutes');
 var lugarRouter  = require('./routes/lugarRoutes');
+var authRouter  = require('./routes/authRoutes');
 
 app.use('/pais', paisRouter);
 app.use('/provincia', provinciaRouter);
@@ -85,7 +87,7 @@ app.use('/parroquia', parroquiaRouter);
 app.use('/lugar', lugarRouter);
 app.use('/categoria', categoriaRouter);
 app.use('/canton', cantonRouter);
-
+app.use('/auth',authRouter)
 
 
 

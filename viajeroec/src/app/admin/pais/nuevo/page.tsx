@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { registroPais } from '@/hooks/ServicePais'; 
 import Swal from 'sweetalert2'; 
 import Sidebar from "@/components/Sidebar";
+import { useRouter } from 'next/navigation';
 
 export default function CrearPaisForm() {
   const [loading, setLoading] = useState(false);
   const [imagenUrl, setImagenUrl] = useState('');
-
+    const router = useRouter();
   const [form, setForm] = useState({
     nombre: '',
     info: ''
@@ -85,6 +86,7 @@ export default function CrearPaisForm() {
                 text: 'El país se ha registrado correctamente en el sistema.',
                 confirmButtonColor: '#0d9488', 
             });
+            router.push('/admin/pais/lista')
             setForm({ nombre: '', info: '' });
             setImagenUrl('');
         } else {
