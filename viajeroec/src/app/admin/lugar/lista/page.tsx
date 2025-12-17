@@ -156,14 +156,14 @@ export default function ListaLugares() {
                                     <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
                                          {lugar.horario || 'N/A'}
                                     </span>
-                                    <a 
-                                        href={`https://www.google.com/maps/search/?api=1&query=$?q=${lugar.latitud},${lugar.longitud}`} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="text-teal-600 hover:text-teal-700 hover:underline flex items-center gap-1 font-medium bg-teal-50 px-2 py-1 rounded-md border border-teal-100 transition-colors"
-                                    >
-                                        Ver Mapa 
-                                    </a>
+                                   <a
+  href={`https://www.google.com/maps?q=${lugar.latitud},${lugar.longitud}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="text-teal-600 hover:text-teal-700 hover:underline flex items-center gap-1 font-medium bg-teal-50 px-2 py-1 rounded-md border border-teal-100 transition-colors"
+>
+  Ver Mapa
+</a>
                                 </div>
                             </div>
                         </div>
