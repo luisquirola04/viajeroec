@@ -7,42 +7,47 @@ const sequelize = require("../config/config");
 const { UUIDV4 } = require("sequelize");
 
 class CantonController {
-    
-async getCantonesActivos(req, res) {
-  try {
-    const cantones = await Canton.findAll({
+  async getCantonesActivos(req, res) {
+    try {
+      const cantones = await Canton.findAll({
       where: { estado: true },
       include: [
         {
           model: Provincia,
-          as: 'Provincia',   
-        }
-      ]
+          as: "Provincia",
+          include: [
+            {
+              model: Pais,
+              as: "Pais",
+            },
+          ],
+        },
+      ],
     });
 
-    return res.status(200).json({
-      code: 200,
-      cantones,
-    });
-
-  } catch (error) {
-    console.error(error.message);
-    return res.status(500).json({
-      msj: "Hubo un problema en la consulta"
-    });
+      return res.status(200).json({
+        code: 200,
+        cantones,
+      });
+    } catch (error) {
+      console.error(error.message);
+      return res.status(500).json({
+        msj: "Hubo un problema en la consulta",
+      });
+    }
   }
-}
-
 
   async crearCanton(req, res) {
-    const { nombre, info, imagen , externalProvincia} = req.body;
-    if (!nombre || !info || !imagen ||!externalProvincia) {
+    const { nombre, info, imagen, externalProvincia } = req.body;
+    if (!nombre || !info || !imagen || !externalProvincia) {
       return res
         .status(404)
         .json({ msj: "No se enviaron los datos necesarios" });
     }
-    const provincia = await Provincia.findOne({where:{external:externalProvincia}});
-    console.log
+    const provincia = await Provincia.findOne({
+      where: { external: externalProvincia },
+    });
+    console.log;
     if (!provincia) {
       return res
         .status(404)
@@ -54,9 +59,11 @@ async getCantonesActivos(req, res) {
         info,
         imagen,
         estado: true,
-        provinciaId: provincia.id
+        provinciaId: provincia.id,
       });
-      return res.status(200).json({ msj: "Canton creada correctamente" , code: 200});
+      return res
+        .status(200)
+        .json({ msj: "Canton creada correctamente", code: 200 });
     } catch (error) {
       console.log(error.message);
       return res.status(400).json({ msj: "Hubo un error al crear el canton" });
@@ -82,7 +89,6 @@ async getCantonesActivos(req, res) {
     }
   }
 */
-
 }
 
 module.exports = new CantonController();

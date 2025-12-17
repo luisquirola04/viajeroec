@@ -11,15 +11,27 @@ class ParroquiaController {
 
 async getParroquiasActivas(req, res) {
   try {
-    const parroquias = await Parroquia.findAll({
-      where: { estado: true },
+  const parroquias = await Parroquia.findAll({
+  where: { estado: true },
+  include: [
+    {
+      model: Canton,
+      as: "Canton",
       include: [
         {
-          model: Canton,
-          as: 'Canton',   
-        }
-      ]
-    });
+          model: Provincia,
+          as: "Provincia",
+          include: [
+            {
+              model: Pais,
+              as: "Pais",
+            },
+          ],
+        },
+      ],
+    },
+  ],
+});
 
     return res.status(200).json({
       code: 200,

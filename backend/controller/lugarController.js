@@ -1,9 +1,11 @@
 const Lugar = require("../models/lugar");
 const Categoria = require("../models/categoria");
 const Parroquia = require("../models/parroquia");
+const Canton = require("../models/canton");
+const Provincia = require("../models/provincia");
+const Pais = require("../models/pais");
 
 class LugarController {
-
   async crearLugar(req, res) {
     const {
       nombre,
@@ -77,36 +79,53 @@ class LugarController {
     }
   }
 
-async getLugaresActivos(req, res) {
-  try {
-    const lugares = await Lugar.findAll({
-      where: { estado: true },
-      order: [["nombre", "ASC"]],
-      include: [
-        {
-          model: Categoria,
-          as: "Categoria",
-          attributes: ["id", "nombre", "external"],
-        },
-        {
-          model: Parroquia,
-          as: "Parroquia",
-          attributes: ["id", "nombre", "external"],
-        },
-      ],
-    });
+  async getLugaresActivos(req, res) {
+    try {
+      const lugares = await Lugar.findAll({
+        where: { estado: true },
+        order: [["nombre", "ASC"]],
+        include: [
+          {
+            model: Categoria,
+            as: "Categoria",
+            attributes: ["id", "nombre", "external"],
+          },
+          {
+            model: Parroquia,
+            as: "Parroquia",
+            include: [
+              {
+                model: Canton,
+                as: "Canton",
+                include: [
+                  {
+                    model: Provincia,
+                    as: "Provincia",
+                    include: [
+                      {
+                        model: Pais,
+                        as: "Pais",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
 
-    return res.status(200).json({
-      code: 200,
-      lugares,
-    });
-  } catch (error) {
-    console.error(error.message);
-    return res.status(500).json({
-      msj: "Hubo un problema en la consulta",
-    });
+      return res.status(200).json({
+        code: 200,
+        lugares,
+      });
+    } catch (error) {
+      console.error(error.message);
+      return res.status(500).json({
+        msj: "Hubo un problema en la consulta",
+      });
+    }
   }
-}
 }
 
 module.exports = new LugarController();
