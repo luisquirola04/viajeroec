@@ -93,7 +93,7 @@ console.log(res)
             
             <div className="relative z-10">
                 <h1 className="text-4xl font-extrabold tracking-tight mb-2">Viajero<span className="text-teal-200">Ec</span></h1>
-                <p className="text-teal-100 text-sm opacity-90">Gestión Turística Inteligente</p>
+                <p className="text-teal-100 text-sm opacity-90">Gestión Turística</p>
             </div>
 
             <div className="relative z-10">

@@ -1,10 +1,10 @@
 import { PATCH, POST } from "./Connection";
 import { GET } from "./Connection";
 
-export async function registroCategoria(data) {
+export async function registroCategoria(token, data) {
   let datos = null;
   try {
-    datos = await POST("/categoria/crear", data);
+    datos = await POST("/categoria/crear", data, token);
   } catch (error) {
     console.log(error);
     return error;

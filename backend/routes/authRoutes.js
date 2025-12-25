@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const loginController = require('../controller/authController'); 
 const { body } = require('express-validator');
+const auth = require("../middleware/AuthAdmin");
 
 
 router.post(
@@ -22,10 +23,16 @@ router.post(
         body('apellido', 'Ingrese un apellido').trim().exists().notEmpty(),
         body('correo', 'Ingrese un correo').trim().exists().notEmpty(),
         body('contrasena', 'Ingrese una contraseña').trim().exists().notEmpty(),
-    ],
+    ],auth,
     loginController.registrarAdmin
 );
 
-
+router.get('/validar', auth, (req, res) => {
+    res.status(200).json({ 
+        msg: "Token válido", 
+        code: 200, 
+        data: req.user 
+    });
+});
 
 module.exports = router;

@@ -8,6 +8,7 @@ import { registroCategoria } from '@/hooks/ServiceCategoria'; // Ajusta la ruta
 export default function CrearCategoriaForm() {
   const [loading, setLoading] = useState(false);
   const [nombre, setNombre] = useState('');
+const token = sessionStorage.getItem("token");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,7 +16,7 @@ export default function CrearCategoriaForm() {
 
     try {
         Swal.fire({ title: 'Guardando...', didOpen: () => Swal.showLoading() });
-        const res = await registroCategoria({ nombre });
+        const res = await registroCategoria({ token, nombre });
 
         if(res && res.code === 200) { 
             Swal.fire({ icon: 'success', title: '¡Categoría Creada!', text: res.msj, confirmButtonColor: '#0d9488' });

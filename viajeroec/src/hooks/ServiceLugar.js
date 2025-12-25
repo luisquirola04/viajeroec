@@ -1,10 +1,10 @@
 import { PATCH, POST } from "./Connection";
 import { GET } from "./Connection";
 
-export async function registroLugar(data) {
+export async function registroLugar(token ,data) {
   let datos = null;
   try {
-    datos = await POST("/lugar/crear", data);
+    datos = await POST("/lugar/crear", data, token);
   } catch (error) {
     console.log(error);
     return error;

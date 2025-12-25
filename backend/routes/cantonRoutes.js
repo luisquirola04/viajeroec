@@ -1,9 +1,10 @@
 var express = require("express");
 const CantonController = require("../controller/cantonController");
 var router = express.Router();
+const auth = require("../middleware/AuthAdmin");
 
 router.get('/get', CantonController.getCantonesActivos);
-router.post('/crear', CantonController.crearCanton);
+router.post('/crear', auth,CantonController.crearCanton);
 
 
 

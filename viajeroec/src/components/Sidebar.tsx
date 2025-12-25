@@ -9,10 +9,9 @@ import {
   List,
   LogOut,
 } from "lucide-react";
+import { validarToken } from "@/hooks/ServiceAuth"; 
 
-/* =========================
-   MENÚ CON SUBSECCIONES
-========================= */
+
 const menuItems = [
   {
     title: "Países",
@@ -71,46 +70,69 @@ export default function Sidebar() {
   const [userName, setUserName] = useState<string | null>(null);
   const [initials, setInitials] = useState("");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(true); 
 
-  /* =========================
-     AUTH SIMPLE
-  ========================= */
-  useEffect(() => {
-    const name = sessionStorage.getItem("user");
-
-    if (!name) {
-      router.push("/");
-      return;
-    }
-
-    setUserName(name);
-    setInitials(
-      name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    );
-  }, [router]);
 
   const handleLogout = () => {
     sessionStorage.clear();
     router.push("/");
   };
 
+
+  useEffect(() => {
+    const checkSession = async () => {
+  
+      const name = sessionStorage.getItem("user");
+      const token = sessionStorage.getItem("token"); 
+
+      console.log(name, token)
+      if (!name || !token) {
+        handleLogout();
+        return;
+      }
+
+      // 3. Validar token contra el backend
+      try {
+        const respuesta = await validarToken(token);
+        console.log(respuesta)
+        // Asumiendo que tu backend devuelve code: 200 si es exitoso
+        if (respuesta && respuesta.code === 200) {
+            // Token Válido: Seteamos estados
+            setUserName(name);
+            setInitials(
+                name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2)
+            );
+        } else {
+            
+            console.warn("Sesión inválida detectada por el servidor");
+            handleLogout();
+        }
+      } catch (error) {
+        console.error("Error validando sesión:", error);
+        handleLogout();
+      } finally {
+        setIsValidating(false);
+      }
+    };
+
+    checkSession();
+  }, [router]); // Se ejecuta al montar el Sidebar
+
   const toggleMenu = (title: string) => {
     setOpenMenu(openMenu === title ? null : title);
   };
 
-  if (!userName) return null;
+  // Mientras valida o si no hay usuario, no renderizamos el sidebar (o podrías poner un skeleton)
+  if (isValidating || !userName) return null;
 
   return (
     <aside className="h-screen sticky top-0 border-r border-border bg-background flex flex-col hidden md:flex">
-      
-      {/* =========================
-         LOGO
-      ========================= */}
+
       <div className="flex items-center justify-center px-6 py-4 border-b border-border">
         <span className="text-2xl font-extrabold tracking-widest text-primary uppercase">
           viajero<span className="text-foreground">Ec</span>
@@ -118,9 +140,9 @@ export default function Sidebar() {
       </div>
 
       {/* =========================
-         NAV
+          NAV
       ========================= */}
-      <nav className="flex-1 py-6 px-3 space-y-2">
+      <nav className="flex-1 py-6 px-3 space-y-2 overflow-y-auto">
         {menuItems.map((section) => {
           const SectionIcon = section.icon;
           const isOpen = openMenu === section.title;
@@ -175,7 +197,7 @@ export default function Sidebar() {
       </nav>
 
       {/* =========================
-         FOOTER
+          FOOTER
       ========================= */}
       <div className="p-4 border-t border-border bg-muted/20">
         <div className="flex flex-col gap-4">

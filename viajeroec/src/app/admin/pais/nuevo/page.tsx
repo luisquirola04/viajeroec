@@ -14,6 +14,7 @@ export default function CrearPaisForm() {
     nombre: '',
     info: ''
   });
+const token = sessionStorage.getItem("token");
 
   const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME; 
   const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_PRESET;
@@ -77,7 +78,7 @@ export default function CrearPaisForm() {
             didOpen: () => { Swal.showLoading(); }
         });
 
-        const res = await registroPais(dataToSend);
+        const res = await registroPais(token, dataToSend);
 
         if(res && (res.code === 200 || res.status === 200)) { 
             Swal.fire({
@@ -154,7 +155,7 @@ export default function CrearPaisForm() {
                             </label>
                         )}
                     </div>
-                    <p className="text-xs text-slate-400 mt-4 text-center">La imagen se guardará automáticamente en Cloudinary.</p>
+                  
                 </div>
 
                 {/* Lado Derecho: Formulario */}

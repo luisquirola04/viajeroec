@@ -11,7 +11,8 @@ import { listarPaises } from '@/hooks/ServicePais';
 export default function CrearProvinciaForm() {
   const [loading, setLoading] = useState(false);
   const [imagenUrl, setImagenUrl] = useState('');
-  
+  const token = sessionStorage.getItem("token");
+
   // Lista para el Combo Box
   const [listaPaises, setListaPaises] = useState([]);
 
@@ -27,7 +28,6 @@ export default function CrearProvinciaForm() {
   // 1. CARGAR PAISES AL INICIO
   useEffect(() => {
     const cargarPaises = async () => {
-        const token = sessionStorage.getItem("token");
         try {
             const respuesta = await listarPaises(token);
             // Validamos estructura: { paises: [...] }
@@ -99,7 +99,7 @@ export default function CrearProvinciaForm() {
             didOpen: () => { Swal.showLoading(); }
         });
 
-        const res = await registroProvincia(dataToSend);
+        const res = await registroProvincia(token, dataToSend);
 
         // Verificamos el 'code: 200' que envía tu backend
         if(res && (res.code === 200 || res.status === 200)) { 

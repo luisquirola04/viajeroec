@@ -11,7 +11,8 @@ import { listarCanton } from '@/hooks/ServiceCanton'; // Para llenar el combo
 export default function CrearParroquiaForm() {
   const [loading, setLoading] = useState(false);
   const [imagenUrl, setImagenUrl] = useState('');
-  
+  const token = sessionStorage.getItem("token");
+
   // Lista para el Combo Box de Cantones
   const [listaCantones, setListaCantones] = useState([]);
 
@@ -28,7 +29,6 @@ export default function CrearParroquiaForm() {
   // 1. CARGAR CANTONES
   useEffect(() => {
     const cargarCantones = async () => {
-        const token = sessionStorage.getItem("token");
         try {
             const respuesta = await listarCanton(token);
             if (respuesta && respuesta.cantones) {
@@ -97,7 +97,7 @@ export default function CrearParroquiaForm() {
             didOpen: () => { Swal.showLoading(); }
         });
 
-        const res = await registroParroquia(dataToSend);
+        const res = await registroParroquia(token, dataToSend);
 
         if(res && (res.code === 200 || res.status === 200)) { 
             Swal.fire({

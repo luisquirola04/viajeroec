@@ -12,7 +12,8 @@ import { listarProvincia } from '@/hooks/ServiceProvincia';
 export default function CrearCantonForm() {
   const [loading, setLoading] = useState(false);
   const [imagenUrl, setImagenUrl] = useState('');
-  
+const token = sessionStorage.getItem("token");
+
   // Estado para guardar la lista de PROVINCIAS para el combo box
   const [listaProvincias, setListaProvincias] = useState([]);
 
@@ -28,7 +29,6 @@ export default function CrearCantonForm() {
   // --- 1. CARGAR PROVINCIAS AL INICIO ---
   useEffect(() => {
     const cargarProvincias = async () => {
-        const token = sessionStorage.getItem("token");
         try {
             const respuesta = await listarProvincia(token);
             // Validamos estructura: { provincias: [...] }
@@ -100,7 +100,7 @@ export default function CrearCantonForm() {
         });
 
         // Llamamos al hook de CANTON
-        const res = await registroCanton(dataToSend);
+        const res = await registroCanton(token,dataToSend);
 
         if(res && (res.code === 200 || res.status === 200)) { 
             Swal.fire({

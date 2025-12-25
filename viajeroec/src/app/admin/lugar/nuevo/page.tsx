@@ -23,6 +23,7 @@ export default function CrearLugarForm() {
   
   const [listaCategorias, setListaCategorias] = useState([]);
   const [listaParroquias, setListaParroquias] = useState([]);
+const token = sessionStorage.getItem("token");
 
   const [form, setForm] = useState({
     nombre: '',
@@ -40,7 +41,6 @@ export default function CrearLugarForm() {
   // 1. CARGAR COMBOS
   useEffect(() => {
     const cargarCombos = async () => {
-        const token = sessionStorage.getItem("token");
         try {
             const [resCat, resParr] = await Promise.all([
                 listarCategoria(token),
@@ -94,7 +94,7 @@ export default function CrearLugarForm() {
 
     try {
         Swal.fire({ title: 'Guardando...', didOpen: () => Swal.showLoading() });
-        const res = await registroLugar(dataToSend);
+        const res = await registroLugar(token, dataToSend);
 
         if(res && res.code === 200) { 
             Swal.fire({ icon: 'success', title: '¡Lugar Creado!', text: res.msj, confirmButtonColor: '#0d9488' });
