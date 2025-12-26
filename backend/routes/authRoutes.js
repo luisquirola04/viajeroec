@@ -23,7 +23,7 @@ router.post(
         body('apellido', 'Ingrese un apellido').trim().exists().notEmpty(),
         body('correo', 'Ingrese un correo').trim().exists().notEmpty(),
         body('contrasena', 'Ingrese una contraseña').trim().exists().notEmpty(),
-    ],auth,
+    ],
     loginController.registrarAdmin
 );
 

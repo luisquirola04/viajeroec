@@ -16,7 +16,7 @@ const Canton= require('./models/canton');
 const Categoria= require('./models/categoria');
 const Lugar= require('./models/lugar');
 const Cuenta= require('./models/cuenta');
-
+const MultimediaLugar = require('./models/multimediaLugar');
 //relaciones de clases
 
 // País <---- 1:N ----> Provincia
@@ -41,6 +41,16 @@ const Cuenta= require('./models/cuenta');
  Categoria.hasMany( Lugar, { foreignKey: 'categoriaId', as: 'Lugares' });
  Lugar.belongsTo( Categoria, { foreignKey: 'categoriaId', as: 'Categoria' });
 
+// Lugar <---- 1:N ----> MultimediaLugar
+Lugar.hasMany(MultimediaLugar, {
+  foreignKey: 'lugarId',
+  as: 'Multimedia'
+});
+
+MultimediaLugar.belongsTo(Lugar, {
+  foreignKey: 'lugarId',
+  as: 'Lugar'
+});
 
 
 

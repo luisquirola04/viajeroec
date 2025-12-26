@@ -30,9 +30,6 @@ const Lugar = sequelize.define(
       type: DataTypes.STRING(50),
     },
 
-    imagen: {
-      type: DataTypes.JSON,
-    },
 
     estado: {
       type: DataTypes.BOOLEAN,
