@@ -39,7 +39,7 @@ class CantonController {
 
   async crearCanton(req, res) {
     const { nombre, info, imagen, externalProvincia } = req.body;
-    if (!nombre || !info || !imagen || !externalProvincia) {
+    if (!nombre || !info  || !externalProvincia) {
       return res
         .status(404)
         .json({ msj: "No se enviaron los datos necesarios" });
@@ -57,7 +57,6 @@ class CantonController {
       await Canton.create({
         nombre,
         info,
-        imagen,
         estado: true,
         provinciaId: provincia.id,
       });

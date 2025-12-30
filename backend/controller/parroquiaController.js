@@ -50,7 +50,7 @@ async getParroquiasActivas(req, res) {
   async crearParroquia(req, res) {
     const { nombre, info, imagen, externalCanton, tipoParroquia } = req.body;
 
-    if (!nombre || !info || !imagen || !externalCanton || !tipoParroquia) {
+    if (!nombre || !info  || !externalCanton || !tipoParroquia) {
       return res.status(400).json({ msj: "Faltan datos requeridos" });
     }
 
@@ -65,7 +65,6 @@ async getParroquiasActivas(req, res) {
       await Parroquia.create({
         nombre,
         info,
-        imagen,
         estado: true,
         tipoParroquia,      // 'URBANA' o 'RURAL'
         cantonId: canton.id // Relación FK (Asegúrate de tener esto en tu modelo)

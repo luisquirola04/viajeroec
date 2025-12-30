@@ -4,12 +4,13 @@ import { useState } from "react";
 import Swal from "sweetalert2";
 import Sidebar from "@/components/Sidebar";
 import { registroCategoria } from "@/hooks/ServiceCategoria"; // Ajusta la ruta
+import { useRouter } from 'next/navigation';
 
 export default function CrearCategoriaForm() {
   const [loading, setLoading] = useState(false);
   const [nombre, setNombre] = useState("");
   const token = sessionStorage.getItem("token");
-
+const router = useRouter();
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nombre.trim())
@@ -27,6 +28,8 @@ export default function CrearCategoriaForm() {
           confirmButtonColor: "#0d9488",
         });
         setNombre("");
+        router.push('/admin/categoria/lista')
+
       } else {
         Swal.fire("Error", res.msj || "Error desconocido", "error");
       }

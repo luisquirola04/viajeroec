@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 // Importamos los hooks
 import { registroProvincia } from '@/hooks/ServiceProvincia'; 
 import { listarPaises } from '@/hooks/ServicePais'; 
+import { useRouter } from 'next/navigation';
 
 export default function CrearProvinciaForm() {
   const [loading, setLoading] = useState(false);
@@ -15,6 +16,7 @@ export default function CrearProvinciaForm() {
 
   // Lista para el Combo Box
   const [listaPaises, setListaPaises] = useState([]);
+    const router = useRouter();
 
   const [form, setForm] = useState({
     nombre: '',
@@ -112,6 +114,8 @@ export default function CrearProvinciaForm() {
             // Resetear form
             setForm({ nombre: '', info: '', pais_external: '' });
             setImagenUrl('');
+            router.push('/admin/provincia/lista')
+
         } else {
             Swal.fire('Error', res.msj || 'Error desconocido', 'error');
         }

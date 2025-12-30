@@ -7,6 +7,8 @@ const sequelize = require('../config/config');
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     ...UbicacionAtributos(sequelize, DataTypes), 
     tipoParroquia:{type: DataTypes.ENUM('RURAL', 'URBANA')},
+        imagen: { type: DataTypes.STRING },
+
     cantonId: { 
             type: DataTypes.INTEGER,
             allowNull: false 
