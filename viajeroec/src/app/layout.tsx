@@ -5,8 +5,11 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SGRA",
-  description: "Sistema de gestión de requisitos ágiles",
+  title: "Viajero Ec",
+  description: "Sistema para turismo en Ecuador",
+  icons: {
+    icon: '/icon.png',
+  },
 };
 
 export default function RootLayout({
