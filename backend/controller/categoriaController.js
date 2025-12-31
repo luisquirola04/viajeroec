@@ -8,7 +8,7 @@ class CategoriaController {
     try {
       const categorias = await Categoria.findAll({
         where: { estado: true },
-        order: [["nombre", "ASC"]],
+       
       });
 
       return res.status(200).json({

@@ -5,6 +5,7 @@ const auth = require("../middleware/AuthAdmin");
 
 router.get('/get', ProvinciaController.getProvinciasActivas);
 router.post('/crear',auth, ProvinciaController.crearProvincia);
+router.get('/getEc', ProvinciaController.listarProvinciaEc);
 
 
 

@@ -10,20 +10,20 @@ class CantonController {
   async getCantonesActivos(req, res) {
     try {
       const cantones = await Canton.findAll({
-      where: { estado: true },
-      include: [
-        {
-          model: Provincia,
-          as: "Provincia",
-          include: [
-            {
-              model: Pais,
-              as: "Pais",
-            },
-          ],
-        },
-      ],
-    });
+        where: { estado: true },
+        include: [
+          {
+            model: Provincia,
+            as: "Provincia",
+            include: [
+              {
+                model: Pais,
+                as: "Pais",
+              },
+            ],
+          },
+        ],
+      });
 
       return res.status(200).json({
         code: 200,
@@ -38,8 +38,8 @@ class CantonController {
   }
 
   async crearCanton(req, res) {
-    const { nombre, info, imagen, externalProvincia } = req.body;
-    if (!nombre || !info  || !externalProvincia) {
+    const { nombre, info, externalProvincia } = req.body;
+    if (!nombre || !info || !externalProvincia) {
       return res
         .status(404)
         .json({ msj: "No se enviaron los datos necesarios" });
@@ -68,7 +68,47 @@ class CantonController {
       return res.status(400).json({ msj: "Hubo un error al crear el canton" });
     }
   }
+  async getCantonesActivosProvincia(req, res) {
+    try {
+      const externalProvincia = req.params.externalProvincia
+      if (!externalProvincia) {
+        return res
+          .status(404)
+          .json({ msj: "Datos faltantes" });
+      }
+      const provincia = await Provincia.findOne({ where: { external: externalProvincia } });
+      if (!provincia) {
+        return res
+          .status(404)
+          .json({ msj: "No se encuentra la provincia" });
+      }
+      const cantones = await Canton.findAll({
+        where: { estado: true, provinciaId: provincia.id },
+        include: [
+          {
+            model: Provincia,
+            as: "Provincia",
+            include: [
+              {
+                model: Pais,
+                as: "Pais",
+              },
+            ],
+          },
+        ],
+      });
 
+      return res.status(200).json({
+        code: 200,
+        cantones,
+      });
+    } catch (error) {
+      console.error(error.message);
+      return res.status(500).json({
+        msj: "Hubo un problema en la consulta",
+      });
+    }
+  }
   /**
 
   async editarPais(req, res) {

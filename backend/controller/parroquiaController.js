@@ -9,53 +9,53 @@ const { UUIDV4 } = require("sequelize");
 
 class ParroquiaController {
 
-async getParroquiasActivas(req, res) {
-  try {
-  const parroquias = await Parroquia.findAll({
-  where: { estado: true },
-  include: [
-    {
-      model: Canton,
-      as: "Canton",
-      include: [
-        {
-          model: Provincia,
-          as: "Provincia",
-          include: [
-            {
-              model: Pais,
-              as: "Pais",
-            },
-          ],
-        },
-      ],
-    },
-  ],
-});
+  async getParroquiasActivas(req, res) {
+    try {
+      const parroquias = await Parroquia.findAll({
+        where: { estado: true },
+        include: [
+          {
+            model: Canton,
+            as: "Canton",
+            include: [
+              {
+                model: Provincia,
+                as: "Provincia",
+                include: [
+                  {
+                    model: Pais,
+                    as: "Pais",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
 
-    return res.status(200).json({
-      code: 200,
-      parroquias,
-    });
+      return res.status(200).json({
+        code: 200,
+        parroquias,
+      });
 
-  } catch (error) {
-    console.error(error.message);
-    return res.status(500).json({
-      msj: "Hubo un problema en la consulta"
-    });
+    } catch (error) {
+      console.error(error.message);
+      return res.status(500).json({
+        msj: "Hubo un problema en la consulta"
+      });
+    }
   }
-}
 
 
   async crearParroquia(req, res) {
-    const { nombre, info, imagen, externalCanton, tipoParroquia } = req.body;
+    const { nombre, info, externalCanton, tipoParroquia } = req.body;
 
-    if (!nombre || !info  || !externalCanton || !tipoParroquia) {
+    if (!nombre || !info || !externalCanton || !tipoParroquia) {
       return res.status(400).json({ msj: "Faltan datos requeridos" });
     }
 
     const canton = await Canton.findOne({ where: { external: externalCanton } });
-    
+
     if (!canton) {
       return res.status(404).json({ msj: "El cantón seleccionado no existe" });
     }
@@ -76,7 +76,54 @@ async getParroquiasActivas(req, res) {
       return res.status(400).json({ msj: "Hubo un error al crear la parroquia" });
     }
   }
+  async getParroquiasActivasCanton(req, res) {
+    try {
+      const externalCanton = req.params.externalCanton
+      if (!externalCanton) {
+        return res
+          .status(404)
+          .json({ msj: "Datos faltantes" });
+      }
+      const canton = await Canton.findOne({ where: { external: externalCanton } });
+      if (!canton) {
+        return res
+          .status(404)
+          .json({ msj: "No se encuentra el canton" });
+      }
+      const parroquias = await Parroquia.findAll({
+        where: { estado: true, cantonId: canton.id },
+        include: [
+          {
+            model: Canton,
+            as: "Canton",
+            include: [
+              {
+                model: Provincia,
+                as: "Provincia",
+                include: [
+                  {
+                    model: Pais,
+                    as: "Pais",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
 
+      return res.status(200).json({
+        code: 200,
+        parroquias,
+      });
+
+    } catch (error) {
+      console.error(error.message);
+      return res.status(500).json({
+        msj: "Hubo un problema en la consulta", "error":error
+      });
+    }
+  }
   /**
 
   async editarPais(req, res) {
@@ -96,6 +143,8 @@ async getParroquiasActivas(req, res) {
     }
   }
 */
+
+
 
 }
 
