@@ -1,16 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import Sidebar from "@/components/Sidebar";
-import { registroCategoria } from "@/hooks/ServiceCategoria"; // Ajusta la ruta
+import { 
+  registroCategoria, 
+  registroCategoriaHija, 
+  listarCategoria 
+} from "@/hooks/ServiceCategoria"; 
 import { useRouter } from 'next/navigation';
 
 export default function CrearCategoriaForm() {
   const [loading, setLoading] = useState(false);
   const [nombre, setNombre] = useState("");
-  const token = sessionStorage.getItem("token");
-const router = useRouter();
+  const [padreSeleccionado, setPadreSeleccionado] = useState(""); // Aquí guardaremos el 'external'
+  const [listaCategorias, setListaCategorias] = useState([]); // Array de categorías
+  
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem("token") : null;
+  const router = useRouter();
+
+  // 1. Cargar las categorías existentes
+  useEffect(() => {
+    const cargarCategorias = async () => {
+      if (token) {
+        try {
+          const respuesta = await listarCategoria(token);
+          // console.log("Respuesta categorias:", respuesta); // Debug
+
+          // AJUSTE AQUÍ: La respuesta tiene la forma { code: 200, categorias: [...] }
+          // Dependiendo de cómo retorne tu servicio, accedemos a .categorias
+          if (respuesta && respuesta.categorias) {
+            setListaCategorias(respuesta.categorias);
+          } else if (Array.isArray(respuesta)) {
+             // Por si acaso el servicio devolviera el array directo
+            setListaCategorias(respuesta);
+          }
+        } catch (error) {
+          console.error("Error cargando categorías", error);
+        }
+      }
+    };
+    cargarCategorias();
+  }, [token]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nombre.trim())
@@ -18,8 +50,24 @@ const router = useRouter();
 
     try {
       Swal.fire({ title: "Guardando...", didOpen: () => Swal.showLoading() });
-      const res = await registroCategoria(token, {nombre});
-      console.log(res);
+      
+      let res;
+
+      // 2. Lógica para decidir si es Padre o Hija
+      if (padreSeleccionado && padreSeleccionado !== "") {
+        // ES HIJA: enviamos el external del padre seleccionado
+        const data = { 
+            nombre, 
+            externalPadre: padreSeleccionado 
+        };
+        res = await registroCategoriaHija(token, data);
+      } else {
+        // ES PADRE: solo enviamos nombre
+        const data = { nombre };
+        res = await registroCategoria(token, data);
+      }
+
+      // Validamos respuesta (Tu back devuelve code: 200 en el body)
       if (res && res.code === 200) {
         Swal.fire({
           icon: "success",
@@ -28,7 +76,8 @@ const router = useRouter();
           confirmButtonColor: "#0d9488",
         });
         setNombre("");
-        router.push('/admin/categoria/lista')
+        setPadreSeleccionado(""); 
+        router.push('/admin/categoria/lista');
 
       } else {
         Swal.fire("Error", res.msj || "Error desconocido", "error");
@@ -49,6 +98,7 @@ const router = useRouter();
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Input Nombre */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Nombre de Categoría
@@ -57,11 +107,37 @@ const router = useRouter();
                 type="text"
                 required
                 placeholder="Ej: Playas, Montañas, Gastronomía..."
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:bg-white outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:bg-white outline-none transition-colors"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
               />
             </div>
+
+            {/* Select Padre */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Categoría Padre (Opcional)
+              </label>
+              <select
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:bg-white outline-none transition-colors appearance-none cursor-pointer"
+                value={padreSeleccionado}
+                onChange={(e) => setPadreSeleccionado(e.target.value)}
+              >
+                {/* Opción por defecto para crear una raíz */}
+                <option value="">Ninguna (Es categoría principal)</option>
+                
+                {/* Mapeo basado en tu JSON: usamos 'external' como value */}
+                {listaCategorias.map((cat) => (
+                  <option key={cat.id} value={cat.external}>
+                    {cat.nombre}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-400 mt-1 ml-1">
+                Selecciona una opción solo si esta categoría pertenece a otra.
+              </p>
+            </div>
+
             <button
               type="submit"
               disabled={loading}

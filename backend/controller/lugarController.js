@@ -371,6 +371,118 @@ class LugarController {
   }
 
 
+  async listarLugaresParroquiaCategoria(req, res) {
+    //logica para listar lugares segun su parroquia y la categoria enviada por parametros
+    try {
+      const { externalCategoria, externalParroquia } = req.params;
+      if (!externalCategoria || !externalParroquia) {
+        return res.status(400).json({
+          code: 400,
+          msg: "Datos insuficientes"
+        });
+      }
+
+      const lugares = await Lugar.findAll({
+        where: { estado: true },
+        attributes: ['id', 'external', 'nombre', 'descripcion', 'horario', 'latitud', 'longitud'],
+        include: [
+          {
+            model: Categoria,
+            as: 'Categoria',
+            where: { external: externalCategoria },
+            attributes: ['nombre', 'external']
+          },
+          {
+            model: Parroquia,
+            as: 'Parroquia',
+            where: { external: externalParroquia },
+            attributes: ['nombre', 'external']
+          },
+          {
+            model: MultimediaLugar,
+            as: 'Multimedia',
+            where: { estado: true },
+            required: false,
+            attributes: ['url', 'external']
+          }
+        ]
+      });
+
+
+      return res.status(200).json({
+        code: 200,
+        msg: "OK",
+        data: lugares
+      });
+    } catch (error) {
+      return res.status(500).json({
+        code: 500,
+        msg: "Error al buscar lugares"
+      });
+    }
+  }
+
+
+
+
+  async listarLugarExternal(req, res) {
+
+    try {
+      const { externalLugar } = req.params;
+      if (!externalLugar ) {
+        return res.status(400).json({
+          code: 400,
+          msg: "Datos insuficientes"
+        });
+      }
+
+      const lugar = await Lugar.findAll({
+        where: { estado: true, external: externalLugar },
+        attributes: ['id', 'external', 'nombre', 'descripcion', 'horario', 'latitud', 'longitud'],
+        include: [
+          {
+            model: Categoria,
+            as: 'Categoria',
+     
+            attributes: ['nombre', 'external']
+          },
+          {
+            model: Parroquia,
+            as: 'Parroquia',
+     
+            attributes: ['nombre', 'external']
+          },
+          {
+            model: MultimediaLugar,
+            as: 'Multimedia',
+            where: { estado: true },
+            required: false,
+            attributes: ['url', 'external']
+          }
+        ]
+      });
+
+
+      return res.status(200).json({
+        code: 200,
+        msg: "OK",
+        data: lugar
+      });
+    } catch (error) {
+      return res.status(500).json({
+        code: 500,
+        msg: "Error al buscar lugares"
+      });
+    }
+  }
+
+
+
+
+
+
+
+
 }
 
 module.exports = new LugarController();

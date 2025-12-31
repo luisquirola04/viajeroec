@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, StatusBar, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { listarCategorias } from '../../services/ApiServices'; 
+import { listarCategorias, obtenerCategoriasHijas } from '../../services/ApiServices'; 
 
-// --- LÓGICA DE ICONOS (Igual) ---
+// --- LÓGICA DE ICONOS ---
 const getAtributosCategoria = (nombre: string) => {
   const nombreLower = nombre.toLowerCase();
   if (nombreLower.includes('comer') || nombreLower.includes('gastronomia')) return { icon: 'restaurant', color: '#FF5252' }; 
@@ -17,6 +17,7 @@ const getAtributosCategoria = (nombre: string) => {
 
 export default function CategoriasScreen() {
   const [categorias, setCategorias] = useState([]);
+  const [loadingCheck, setLoadingCheck] = useState(false); // Estado para mostrar carga al verificar hijas
   const params = useLocalSearchParams();
   const router = useRouter();
 
@@ -30,13 +31,60 @@ export default function CategoriasScreen() {
     cargarCategorias();
   }, []);
 
+  // Función inteligente de navegación
+  const manejarNavegacion = async (item) => {
+    setLoadingCheck(true); // Mostramos spinner si la consulta tarda
+    try {
+        // Consultamos si tiene hijas
+        const dataHijas = await obtenerCategoriasHijas(item.external);
+        
+        setLoadingCheck(false);
+
+        // Verificamos si el array tiene elementos
+        if (dataHijas && dataHijas.categorias && dataHijas.categorias.length > 0) {
+            // CASO 1: TIENE HIJAS -> Vamos a la pantalla intermedia
+            router.push({
+                pathname: "/categorias/categoriasHijas",
+                params: {
+                    externalPadre: item.external,
+                    nombrePadre: item.nombre,
+                    externalParroquia: params.parroquiaExternal // Pasamos la parroquia para no perderla
+                }
+            });
+        } else {
+            // CASO 2: NO TIENE HIJAS -> Vamos directo a los lugares (Comportamiento original)
+            router.push({
+                pathname: "/categorias/categoriaElegida", 
+                params: {
+                    nombreCategoria: item.nombre,
+                    externalCategoria: item.external,      
+                    externalParroquia: params.parroquiaExternal 
+                }
+            });
+        }
+    } catch (error) {
+        setLoadingCheck(false);
+        console.error("Error verificando subcategorías", error);
+        // Si falla, por seguridad mandamos a lugares
+        router.push({
+            pathname: "/categorias/categoriaElegida", 
+            params: {
+                nombreCategoria: item.nombre,
+                externalCategoria: item.external,      
+                externalParroquia: params.parroquiaExternal 
+            }
+        });
+    }
+  };
+
   const renderItem = ({ item }) => {
     const { icon, color } = getAtributosCategoria(item.nombre);
     return (
       <TouchableOpacity 
         style={styles.card}
         activeOpacity={0.7}
-        onPress={() => console.log("Categoría click:", item.nombre)}
+        // Usamos la nueva función
+        onPress={() => manejarNavegacion(item)}
       >
         <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
            <Ionicons name={icon as any} size={32} color={color} />
@@ -50,10 +98,8 @@ export default function CategoriasScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#005bea" />
       
-      {/* --- BANNER COMPACTO --- */}
+      {/* Banner */}
       <View style={styles.banner}>
-        
-        {/* Contenedor fila para Flecha + Título */}
         <View style={styles.headerRow}>
             <TouchableOpacity 
                 onPress={() => router.back()} 
@@ -66,8 +112,6 @@ export default function CategoriasScreen() {
             <Text style={styles.bannerTitle}>
                 Parroquia <Text style={styles.resaltado}>{params.nombreParroquia}</Text>
             </Text>
-            
-            {/* View vacía para equilibrar el espacio a la derecha y que el texto quede centrado */}
             <View style={{width: 30}} />
         </View>
 
@@ -76,7 +120,13 @@ export default function CategoriasScreen() {
         </Text>
       </View>
 
-      {/* --- CUADRÍCULA --- */}
+      {/* Spinner de carga superpuesto (opcional pero recomendado) */}
+      {loadingCheck && (
+          <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="#005bea" />
+          </View>
+      )}
+
       <FlatList
         data={categorias}
         keyExtractor={(item: any) => item.id.toString()}
@@ -93,96 +143,35 @@ export default function CategoriasScreen() {
 }
 
 const { width } = Dimensions.get('window');
-const cardSize = (width - 50) / 2; // Ajusté un poco el cálculo
+const cardSize = (width - 50) / 2; 
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F7FA', 
   },
-  // --- BANNER COMPACTO ---
+  // Estilo para el spinner
+  loadingOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.5)', zIndex: 10,
+    justifyContent: 'center', alignItems: 'center'
+  },
   banner: {
-    backgroundColor: '#1565C0', // Un azul un poco menos oscuro, más amable
-    paddingTop: 20,   
-    paddingBottom: 30, 
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 25, // Curvas más sutiles
-    borderBottomRightRadius: 25,
-    marginBottom: 30, // Menos separación con las tarjetas
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    backgroundColor: '#1565C0', paddingTop: 20, paddingBottom: 30, paddingHorizontal: 20,
+    borderBottomLeftRadius: 25, borderBottomRightRadius: 25, marginBottom: 30, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 5,
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8, // Espacio pequeño entre título y subtítulo
-  },
-  backButton: {
-    padding: 5,
-    // Eliminé el fondo de la flecha para que sea más limpia
-  },
-  bannerTitle: {
-    fontSize: 25, // Texto más pequeño
-    fontWeight: '600',
-    color: '#ffffff',
-    textAlign: 'center',
-    flex: 1, // Para que ocupe el centro
-  },
-  resaltado: {
-    fontWeight: 'bold',
-    color: '#FFD700', 
-    fontSize: 19,
-  },
-  bannerSubtitle: {
-    fontSize: 18, // Subtítulo discreto
-    color: '#E3F2FD', // Azul muy claro
-    textAlign: 'center',
-  },
-  // --- GRID ---
-  gridContainer: {
-    paddingHorizontal: 15, // Márgenes laterales un poco más ajustados
-    paddingBottom: 40,
-  },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: 15, // Menos espacio entre filas
-  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  backButton: { padding: 5 },
+  bannerTitle: { fontSize: 25, fontWeight: '600', color: '#ffffff', textAlign: 'center', flex: 1 },
+  resaltado: { fontWeight: 'bold', color: '#FFD700', fontSize: 19 },
+  bannerSubtitle: { fontSize: 18, color: '#E3F2FD', textAlign: 'center' },
+  gridContainer: { paddingHorizontal: 15, paddingBottom: 40 },
+  row: { justifyContent: 'space-between', marginBottom: 15 },
   card: {
-    width: cardSize,
-    height: cardSize * 0.9, // Tarjetas un poco más rectangulares (menos altas)
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2, // Sombra más sutil
-    shadowColor: '#90A4AE',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    padding: 10,
+    width: cardSize, height: cardSize * 0.9, backgroundColor: '#ffffff', borderRadius: 16,
+    justifyContent: 'center', alignItems: 'center', elevation: 2, shadowColor: '#90A4AE', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, padding: 10,
   },
-  iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  cardText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#455A64',
-    textAlign: 'center',
-  },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 50,
-    color: '#aaa',
-    fontSize: 16,
-  }
+  iconContainer: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+  cardText: { fontSize: 14, fontWeight: '600', color: '#455A64', textAlign: 'center' },
+  emptyText: { textAlign: 'center', marginTop: 50, color: '#aaa', fontSize: 16 }
 });

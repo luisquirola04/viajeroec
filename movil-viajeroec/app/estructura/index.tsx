@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+// 1. Importamos Image desde expo-image (no desde react-native)
+import { Image } from 'expo-image'; 
 import { listarProvinciasEc } from '../../services/ApiServices';
 
 export default function ProvinciasScreen() {
@@ -12,8 +14,6 @@ export default function ProvinciasScreen() {
       try {
         console.log("Consultando provincias...");
         const data = await listarProvinciasEc();
-
-        
         if (data && data.provincias) {
           setProvincias(data.provincias);
         }
@@ -24,45 +24,61 @@ export default function ProvinciasScreen() {
     obtenerProvincias();
   }, []);
 
+  // Función opcional: Si usas Cloudinary, esto fuerza a descargar una versión pequeña
+  // Si no usas Cloudinary, puedes borrar esta función.
+  const optimizarImagen = (url) => {
+    if (!url) return null;
+    if (url.includes('cloudinary')) {
+       // Transforma la URL para pedir ancho 310, calidad automática y formato webp
+       return url.replace('/upload/', '/upload/w_310,h_200,c_fill,q_auto,f_auto/');
+    }
+    return url;
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.tituloHeader}>Explorar Provincias</Text>
 
       <FlatList
         data={provincias}
-        keyExtractor={(item: any) => item.id.toString()}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 20 }}
+        // Optimizaciones de memoria para la lista
+        initialNumToRender={4} 
+        windowSize={5}
+        maxToRenderPerBatch={4}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
             activeOpacity={0.7}
             onPress={() => {
               router.push({
-                
                 pathname: "/estructura/canton",
                 params: {
-                  external: item.external, //
+                  external: item.external,
                   nombreProvincia: item.nombre
                 }
               });
             }}
           >
-           
             <Text style={styles.nombreProvincia}>{item.nombre}</Text>
 
-            
             <View style={styles.badgeContainer}>
               <Text style={styles.paisTexto}>📍 En {item.Pais.nombre}</Text>
             </View>
 
+            {/* Componente Image optimizado de Expo */}
             <Image
-              source={{ uri: item.imagen }}
+              source={optimizarImagen(item.imagen)} 
               style={styles.imagen}
+              contentFit="cover" 
+              transition={500}   
+              cachePolicy="memory-disk" 
             />
 
-            <Text style={styles.descripcion} numberOfLines={2}>
-              {item.info}
-            </Text>
+            <Text style={styles.descripcion}>
+  {item.info}
+</Text>
           </TouchableOpacity>
         )}
       />
@@ -105,9 +121,8 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
   },
-  
   badgeContainer: {
-    backgroundColor: '#e6f0ff', 
+    backgroundColor: '#e6f0ff',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
@@ -115,7 +130,7 @@ const styles = StyleSheet.create({
   },
   paisTexto: {
     fontSize: 14,
-    color: '#0056b3', 
+    color: '#0056b3',
     fontWeight: '600',
   },
   imagen: {
@@ -123,11 +138,14 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 10,
     marginBottom: 10,
+    backgroundColor: '#e1e4e8', 
   },
   descripcion: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    paddingHorizontal: 5
+    fontSize: 14,       
+    color: '#444',       
+    textAlign: 'justify', 
+    paddingHorizontal: 12,
+    lineHeight: 20,      
+    marginTop: 10,      
   }
 });

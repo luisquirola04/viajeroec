@@ -58,7 +58,7 @@ MultimediaLugar.belongsTo(Lugar, {
 
 var app = express();
 
-sequelize.sync({ alter: true })
+sequelize.sync({ alter: false })
     .then(() => {
         console.log('Base de datos sincronizada');
     })

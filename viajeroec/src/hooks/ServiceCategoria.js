@@ -12,10 +12,33 @@ export async function registroCategoria(token, data) {
 
   return datos;
 }
+export async function registroCategoriaHija(token, data) {
+  let datos = null;
+  try {
+    datos = await POST("/categoria/crearHija", data, token);
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+
+  return datos;
+}
+
 export async function listarCategoria(token) {
   let datos = null;
   try {
     datos = await GET("/categoria/get", token);
+  } catch (error) {
+    return error;
+  }
+  console.log(datos.data);
+  return datos.data;
+}
+
+export async function listarCategoriasHijas(token, externalPadre) {
+  let datos = null;
+  try {
+    datos = await GET("/categoria/getHijas/"+externalPadre, token);
   } catch (error) {
     return error;
   }

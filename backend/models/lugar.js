@@ -12,7 +12,7 @@ const Lugar = sequelize.define(
     },
 
     descripcion: {
-      type: DataTypes.STRING(150),
+      type: DataTypes.TEXT,
       allowNull: false,
     },
 

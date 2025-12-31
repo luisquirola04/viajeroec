@@ -40,7 +40,7 @@ export async function listarProvinciasEc() {
 export async function listarCantonesProvincia(external) {
     let datos = null;
     try {
-        datos = await GET_USER("/canton/get/"+ external);
+        datos = await GET_USER("/canton/get/" + external);
 
 
         console.log("Respuesta del Backend:", datos.data);
@@ -59,7 +59,7 @@ export async function listarCantonesProvincia(external) {
 export async function listarParroquiasCanton(external) {
     let datos = null;
     try {
-        datos = await GET_USER("/parroquia/get/"+ external);
+        datos = await GET_USER("/parroquia/get/" + external);
 
 
         console.log("Respuesta del Backend:", datos.data);
@@ -91,3 +91,56 @@ export async function listarCategorias() {
     }
 }
 
+export async function listarLugaresCategoriaParroquia(externalParroquia, externalCategoria) {
+    let datos = null;
+    try {
+        datos = await GET_USER("/lugar/get/" + externalCategoria + "/" + externalParroquia);
+
+
+        console.log("Respuesta del Backend:", datos.data);
+
+
+        return datos.data;
+
+    } catch (error) {
+        console.error("Error en listar Lugares por Categoria y Parroquia:", error);
+
+        return null;
+    }
+}
+
+export async function obtenerLugar(externalLugar) {
+    let datos = null;
+    try {
+        datos = await GET_USER("/lugar/getLugar/" + externalLugar );
+
+
+        console.log("Respuesta del Backend:", datos.data);
+
+
+        return datos.data;
+
+    } catch (error) {
+        console.error("Error en listar Lugares por Categoria y Parroquia:", error);
+
+        return null;
+    }
+}
+
+export async function obtenerCategoriasHijas(externalPadre) {
+    let datos = null;
+    try {
+        datos = await GET_USER("/categoria/getHijas/" + externalPadre );
+
+
+        console.log("Respuesta del Backend:", datos.data);
+
+
+        return datos.data;
+
+    } catch (error) {
+        console.error("Error en listar Lugares por Categoria y Parroquia:", error);
+
+        return null;
+    }
+}

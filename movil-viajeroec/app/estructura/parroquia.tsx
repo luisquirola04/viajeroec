@@ -28,7 +28,6 @@ export default function ParroquiasScreen() {
       <Stack.Screen 
         options={{
           
-          title: params.nombreCanton ? `Parroquias de ${params.nombreCanton}` : 'Parroquias',
         }} 
       />
 
