@@ -57,7 +57,7 @@ export default function CantonesScreen() {
 
             <View style={styles.separator} />
 
-            <Text style={styles.descripcion} numberOfLines={3}>
+            <Text style={styles.descripcion} >
                 {item.info}
             </Text>
 

@@ -1,41 +1,61 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, StyleSheet, Image } from 'react-native'; 
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native'; 
+// 1. IMPORTA LOS ICONOS Y EL CONTEXTO
+import { Ionicons } from '@expo/vector-icons';
+import { RefreshProvider, useRefresh } from './context/RefreshContext'; 
+
+
+const BotonRefrescar = () => {
+  const { triggerRefresh, loading } = useRefresh();
+
+  return (
+    <TouchableOpacity 
+      onPress={triggerRefresh} 
+      style={styles.botonPosicion} 
+      disabled={loading}
+    >
+     
+    </TouchableOpacity>
+  );
+};
 
 export default function RootLayout() {
   return (
-    <View style={{ flex: 1 }}>
  
-      <View style={styles.bannerContainer}>
-        
-    
-        <View style={styles.contenidoBanner}>
+    <RefreshProvider>
+      <View style={{ flex: 1 }}>
+   
+        <View style={styles.bannerContainer}>
+           
           
-            <Image 
-                source={require('../public/banderaEc.png')} 
-                style={styles.bandera}
-            />
-            <Text style={styles.bannerTexto}>VIAJERO EC</Text>
+          <View style={styles.contenidoBanner}>
+              <Image 
+                  source={require('../public/banderaEc.png')} 
+                  style={styles.bandera}
+              />
+              <Text style={styles.bannerTexto}>VIAJERO EC</Text>
+          </View>
+
+          <BotonRefrescar />
+
         </View>
-
+    
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="estructura" options={{ headerShown: false }} />
+          <Stack.Screen name="categorias" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        </Stack>
+        
+        <StatusBar style="auto" />
       </View>
-
-  
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="estructura" options={{ headerShown: false }} />
-        <Stack.Screen name="categorias" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      
-      <StatusBar style="auto" />
-    </View>
+    </RefreshProvider>
   );
 }
 
 const styles = StyleSheet.create({
- 
   bannerContainer: {
     height: 100, 
     backgroundColor: '#005bea', 
@@ -43,8 +63,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',       
     paddingBottom: 15,          
     zIndex: 10, 
+    position: 'relative', 
   },
-  
   
   contenidoBanner: {
     flexDirection: 'row',       
@@ -63,5 +83,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 22, 
     resizeMode: 'contain',
+  },
+
+ 
+  botonPosicion: {
+    position: 'absolute',
+    right: 20,      
+    bottom: 15,    
+    zIndex: 20,
   }
 });
