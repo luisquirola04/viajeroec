@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { 
     View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, 
-    Dimensions, Linking, Platform, StatusBar, Modal, ActionSheetIOS, Alert 
+    Dimensions, Linking, Platform, StatusBar, Modal, ActionSheetIOS, Alert,
+    ActivityIndicator // <--- 1. IMPORTANTE: Importar esto
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,11 +11,36 @@ import { obtenerLugar } from '../../services/ApiServices';
 
 const { width, height } = Dimensions.get('window');
 
+// --- 2. NUEVO COMPONENTE PEQUEÑO PARA MANEJAR LA CARGA DE CADA IMAGEN ---
+const ImagenConCarga = ({ uri, onPress, style }) => {
+    const [cargando, setCargando] = useState(true);
+
+    return (
+        <TouchableOpacity activeOpacity={0.9} onPress={onPress} style={style}>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                {cargando && (
+                    <ActivityIndicator 
+                        style={StyleSheet.absoluteFill} 
+                        size="large" 
+                        color="#005bea" 
+                    />
+                )}
+                <Image 
+                    source={{ uri: uri }} 
+                    style={[style, { position: 'absolute', zIndex: cargando ? -1 : 1 }]} 
+                    resizeMode="cover" 
+                    onLoadStart={() => setCargando(true)}
+                    onLoadEnd={() => setCargando(false)}
+                />
+            </View>
+        </TouchableOpacity>
+    );
+};
+
 export default function LugarDetalleScreen() {
   const [lugar, setLugar] = useState<any>(null);
   const [activeSlide, setActiveSlide] = useState(0);
   
-  // Estados para Modal de imagen
   const [modalVisible, setModalVisible] = useState(false);
   const [imagenSeleccionada, setImagenSeleccionada] = useState('');
   
@@ -46,7 +72,6 @@ export default function LugarDetalleScreen() {
     }
   };
 
-  // --- FUNCIÓN MEJORADA PARA ELEGIR MAPA ---
   const comoLlegar = () => {
     if (!lugar || !lugar.latitud || !lugar.longitud) return;
 
@@ -55,36 +80,29 @@ export default function LugarDetalleScreen() {
     const label = encodeURIComponent(lugar.nombre);
 
     if (Platform.OS === 'android') {
-        // EN ANDROID: El sistema operativo ya muestra el menú de elegir app automáticamente
         const url = `geo:${lat},${lng}?q=${lat},${lng}(${label})`;
         Linking.openURL(url);
     } else {
-        // EN IOS: Creamos un menú manual (ActionSheet)
         ActionSheetIOS.showActionSheetWithOptions(
             {
                 options: ['Cancelar', 'Apple Maps', 'Google Maps', 'Waze'],
                 cancelButtonIndex: 0,
-                // title: 'Elegir aplicación de mapas', // Opcional
             },
             (buttonIndex) => {
                 if (buttonIndex === 1) {
-                    // Apple Maps
                     Linking.openURL(`maps:0,0?q=${label}@${lat},${lng}`);
                 } else if (buttonIndex === 2) {
-                    // Google Maps (Intenta abrir App, si no, abre web)
                     const urlApp = `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving`;
                     const urlWeb = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-                    
                     Linking.canOpenURL(urlApp).then(supported => {
                         if (supported) Linking.openURL(urlApp);
                         else Linking.openURL(urlWeb);
                     });
                 } else if (buttonIndex === 3) {
-                    // Waze
                     const urlWaze = `waze://?ll=${lat},${lng}&navigate=yes`;
                     Linking.canOpenURL(urlWaze).then(supported => {
                         if (supported) Linking.openURL(urlWaze);
-                        else Alert.alert("Waze no instalado", "No se encontró la aplicación Waze en este dispositivo.");
+                        else Alert.alert("Waze no instalado", "No se encontró la aplicación Waze.");
                     });
                 }
             }
@@ -98,7 +116,7 @@ export default function LugarDetalleScreen() {
   };
 
   if (!lugar) return (
-    <View style={styles.loadingContainer}><Text>Cargando...</Text></View>
+    <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#005bea" /></View>
   );
 
   return (
@@ -125,13 +143,13 @@ export default function LugarDetalleScreen() {
             >
                 {lugar.Multimedia && lugar.Multimedia.length > 0 ? (
                     lugar.Multimedia.map((img: any, index: number) => (
-                        <TouchableOpacity 
-                            key={index} 
-                            activeOpacity={0.9} 
+                        // --- 3. AQUI USAMOS EL NUEVO COMPONENTE ---
+                        <ImagenConCarga 
+                            key={index}
+                            uri={img.url}
                             onPress={() => abrirImagenFull(img.url)}
-                        >
-                            <Image source={{ uri: img.url }} style={styles.galleryImage} resizeMode="cover" />
-                        </TouchableOpacity>
+                            style={styles.galleryImage}
+                        />
                     ))
                 ) : (
                     <View style={[styles.galleryImage, styles.placeholderImage]}>
@@ -257,7 +275,7 @@ const styles = StyleSheet.create({
   },
   
   gallery: { height: 250 },
-  galleryImage: { width: width, height: 250 },
+  galleryImage: { width: width, height: 250 }, // Asegura dimensiones fijas
   placeholderImage: { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f0f0' },
   
   paginationContainer: {

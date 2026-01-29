@@ -76,9 +76,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-console.log('--- DEBUG PAIS ROUTER ---');
-console.log(paisRouter);
-console.log('-------------------------');
+
 
 
 
