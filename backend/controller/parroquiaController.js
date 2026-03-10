@@ -5,7 +5,7 @@ const Parroquia = require("../models/parroquia");
 
 require("dotenv").config();
 const sequelize = require("../config/config");
-const { UUIDV4 } = require("sequelize");
+const { UUIDV4, ENUM } = require("sequelize");
 
 class ParroquiaController {
 
@@ -120,29 +120,31 @@ class ParroquiaController {
     } catch (error) {
       console.error(error.message);
       return res.status(500).json({
-        msj: "Hubo un problema en la consulta", "error":error
+        msj: "Hubo un problema en la consulta", "error": error
       });
     }
   }
-  /**
 
-  async editarPais(req, res) {
-    const { nombre, info, imagen, externalPais } = req.body;
-    const pais = await Pais.findOne({where:{external:externalPais}});
+
+  async editarParroquia(req, res) {
+    const { nombre, info, estado, tipoParroquia, externalParroquia } = req.body;
+    const parroquia = await Parroquia.findOne({ where: { external: externalParroquia } });
+if (tipoParroquia != 'RURAL' && tipoParroquia != 'URBANA') {      return res.status(400).json({ msj: "Datos no válidos" });
+    }
     try {
-      await pais.update({
-        nombre:nombre,
-        info:info,
-        imagen:imagen,
-        estado: true,
+      await parroquia.update({
+        nombre: nombre,
+        info: info,
+        estado: estado,
+        tipoParroquia
       });
-      return res.status(200).json({ msj: "Pais creado correctamente", code:200 });
+      return res.status(200).json({ msj: "Parroquia creada correctamente", code: 200 });
     } catch (error) {
       console.log(error.message);
-      return res.status(400).json({ msj: "Hubo un error al crear el pais" });
+      return res.status(400).json({ msj: "Hubo un error al crear el parroquia" });
     }
   }
-*/
+
 
 
 
