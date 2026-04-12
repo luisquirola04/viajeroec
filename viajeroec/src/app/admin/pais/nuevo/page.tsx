@@ -15,7 +15,7 @@ export default function CrearPaisForm() {
     info: ''
   });
 const token = sessionStorage.getItem("token");
-
+console.log(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME);
   const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME; 
   const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_PRESET;
 

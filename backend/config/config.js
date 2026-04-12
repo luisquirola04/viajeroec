@@ -8,9 +8,15 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: process.env.DB_DIALECT,
+    port: Number(process.env.DB_PORT), 
     timezone: '-05:00',
-    port :   process.env.DB_PORT,
 
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    },
   }
 );
 
