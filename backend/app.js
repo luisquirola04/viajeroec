@@ -100,8 +100,9 @@ app.use('/auth',authRouter)
 
 
 
-
-
+app.get('/', (req, res) => {
+  res.send('<h1>FUNCIONANDO</h1>');
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

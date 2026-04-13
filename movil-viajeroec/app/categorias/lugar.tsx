@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { 
     View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, 
     Dimensions, Linking, Platform, StatusBar, Modal, ActionSheetIOS, Alert,
-    ActivityIndicator // <--- 1. IMPORTANTE: Importar esto
+    ActivityIndicator 
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker } from 'react-native-maps';
+// --- 1. ELIMINADO react-native-maps Y AGREGADO WebView ---
+import { WebView } from 'react-native-webview'; 
 import { obtenerLugar } from '../../services/ApiServices'; 
 
 const { width, height } = Dimensions.get('window');
 
-// --- 2. NUEVO COMPONENTE PEQUEÑO PARA MANEJAR LA CARGA DE CADA IMAGEN ---
 const ImagenConCarga = ({ uri, onPress, style }) => {
     const [cargando, setCargando] = useState(true);
 
@@ -119,6 +119,15 @@ export default function LugarDetalleScreen() {
     <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#005bea" /></View>
   );
 
+  // --- 2. CALCULAMOS LOS LÍMITES (BBOX) PARA EL MAPA DE OSM ---
+  const lat = parseFloat(lugar.latitud);
+  const lng = parseFloat(lugar.longitud);
+ const zoomFactor = 0.0002; 
+
+  const osmUrl = lugar.latitud && lugar.longitud 
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${lng - zoomFactor},${lat - zoomFactor},${lng + zoomFactor},${lat + zoomFactor}&layer=mapnik&marker=${lat},${lng}`
+    : null;
+
   return (
     <View style={{flex: 1, backgroundColor: '#fff'}}>
       <StatusBar barStyle="light-content" backgroundColor="#005bea" />
@@ -143,7 +152,6 @@ export default function LugarDetalleScreen() {
             >
                 {lugar.Multimedia && lugar.Multimedia.length > 0 ? (
                     lugar.Multimedia.map((img: any, index: number) => (
-                        // --- 3. AQUI USAMOS EL NUEVO COMPONENTE ---
                         <ImagenConCarga 
                             key={index}
                             uri={img.url}
@@ -204,27 +212,21 @@ export default function LugarDetalleScreen() {
 
             <Text style={styles.sectionTitle}>Ubicación</Text>
             
-            <View style={styles.mapContainer}>
-                <MapView
-                    style={styles.map}
-                    initialRegion={{
-                        latitude: parseFloat(lugar.latitud),
-                        longitude: parseFloat(lugar.longitud),
-                        latitudeDelta: 0.005,
-                        longitudeDelta: 0.005,
-                    }}
-                    mapType="standard"
-                >
-                    <Marker
-                        coordinate={{
-                            latitude: parseFloat(lugar.latitud),
-                            longitude: parseFloat(lugar.longitud),
-                        }}
-                        title={lugar.nombre}
-                        description={lugar.Categoria?.nombre}
+            {osmUrl ? (
+                <View style={styles.mapContainer}>
+                    <WebView
+                        style={styles.map}
+                        source={{ uri: osmUrl }}
+                        scrollEnabled={true} // Evita que el usuario scrollee dentro del mapa y arruine el scroll general
+                        showsHorizontalScrollIndicator={false}
+                        showsVerticalScrollIndicator={false}
                     />
-                </MapView>
-            </View>
+                </View>
+            ) : (
+                <View style={[styles.mapContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+                    <Text style={{ color: '#888' }}>Ubicación en mapa no disponible</Text>
+                </View>
+            )}
 
             <TouchableOpacity style={styles.routeButton} onPress={comoLlegar}>
                 <Ionicons name="navigate-circle" size={28} color="white" />
@@ -275,7 +277,7 @@ const styles = StyleSheet.create({
   },
   
   gallery: { height: 250 },
-  galleryImage: { width: width, height: 250 }, // Asegura dimensiones fijas
+  galleryImage: { width: width, height: 250 }, 
   placeholderImage: { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f0f0' },
   
   paginationContainer: {
