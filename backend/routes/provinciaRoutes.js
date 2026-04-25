@@ -6,8 +6,9 @@ const auth = require("../middleware/AuthAdmin");
 router.get('/get', ProvinciaController.getProvinciasActivas);
 router.post('/crear',auth, ProvinciaController.crearProvincia);
 router.get('/getEc', ProvinciaController.listarProvinciaEc);
-router.get('/getProvincia', auth,ProvinciaController.getProvincia);
+router.get('/getProvincia/:externalProvincia', auth,ProvinciaController.getProvincia);
 router.post('/editar',auth, ProvinciaController.editarProvincia);
+router.get('/cambiarEstadoProvincia/:externalProvincia', auth,ProvinciaController.cambiarEstadoProvincia);
 
 
 module.exports = router;

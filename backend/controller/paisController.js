@@ -1,4 +1,6 @@
 const Pais = require("../models/pais");
+const Provincia = require("../models/provincia");
+
 require("dotenv").config();
 const sequelize = require("../config/config");
 const { UUIDV4 } = require("sequelize");
@@ -78,6 +80,40 @@ if (!externalPais) {
         pais,
         code: 200
       });
+  }
+
+
+
+    async cambiarEstadoPais(req, res) {
+    const externalPais = req.params.externalPais
+    if (!externalPais) {
+      return res.status(400).json({
+        msj: "Datos insuficientes",
+        code: 400
+      });
+    }
+    const pais = await Pais.findOne({
+      where: { external: externalPais }
+    })
+    if (!pais) {
+      return res.status(400).json({
+        msj: "No se encontro el pais",
+        code: 400
+      });
+    }
+    const provincia = await Provincia.findOne({ where: { paisId: pais.id, estado: true } })
+    if (provincia&&pais.estado) {
+      return res.status(400).json({
+        msj: "No se puede eliminar el pais, tiene provincia asociadas",
+        code: 400
+      });
+    }
+    try {
+      await pais.update(!pais.estado);
+    } catch (error) {
+      return res.status(400).json({ msj: "Hubo un error al editar el Pais" });
+
+    }
   }
 }
 

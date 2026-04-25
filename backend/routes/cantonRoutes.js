@@ -8,6 +8,7 @@ router.post('/crear', auth,CantonController.crearCanton);
 router.get('/get/:externalProvincia', CantonController.getCantonesActivosProvincia);
 router.get('/getCanton/:externalCanton',auth, CantonController.getCanton);
 router.post('/editar',auth, CantonController.getCanton);
+router.get('/cambiarEstadoCanton/:externalCanton',auth, CantonController.cambiarEstadoCanton);
 
 
 

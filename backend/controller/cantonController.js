@@ -1,6 +1,7 @@
 const Pais = require("../models/pais");
 const Provincia = require("../models/provincia");
 const Canton = require("../models/canton");
+const Parroquia = require("../models/parroquia");
 
 require("dotenv").config();
 const sequelize = require("../config/config");
@@ -148,7 +149,7 @@ class CantonController {
   async editarCanton(req, res) {
     const { nombre, info, estado, externalCanton } = req.body;
     const canton = await Canton.findOne({ where: { external: externalCanton } });
-if (!externalCanton) {
+    if (!externalCanton) {
       return res.status(400).json({
         msj: "Datos insuficientes",
         code: 400
@@ -158,7 +159,6 @@ if (!externalCanton) {
       await canton.update({
         nombre: nombre,
         info: info,
-        estado: estado,
       });
       return res.status(200).json({ msj: "Cantón actualizado correctamente", code: 200 });
     } catch (error) {
@@ -167,6 +167,37 @@ if (!externalCanton) {
     }
   }
 
+  async cambiarEstadoCanton(req, res) {
+    const externalCanton = req.params.externalCanton
+    if (!externalCanton) {
+      return res.status(400).json({
+        msj: "Datos insuficientes",
+        code: 400
+      });
+    }
+    const canton = await Canton.findOne({
+      where: { external: externalCanton }
+    })
+    if (!canton) {
+      return res.status(400).json({
+        msj: "No se encontro el canton",
+        code: 400
+      });
+    }
+    const parroquia = await Parroquia.findOne({ where: { cantonId: canton.id, estado: true } })
+    if (parroquia&&canton.estado) {
+      return res.status(400).json({
+        msj: "No se puede eliminar el canton, tiene parroquias asociadas",
+        code: 400
+      });
+    }
+    try {
+      await canton.update(!canton.estado);
+    } catch (error) {
+      return res.status(400).json({ msj: "Hubo un error al editar el Cantón" });
+
+    }
+  }
 }
 
 module.exports = new CantonController();

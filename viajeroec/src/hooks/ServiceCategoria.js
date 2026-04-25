@@ -45,3 +45,36 @@ export async function listarCategoriasHijas(token, externalPadre) {
   console.log(datos.data);
   return datos.data;
 }
+
+export async function getCategoria(token, externalCategoria) {
+  let datos = null;
+  try {
+    datos = await GET("/categoria/getCategoria/"+externalCategoria, token);
+  } catch (error) {
+    return error;
+  }
+  console.log(datos.data);
+  return datos.data;
+}
+
+export async function editarCategoria(token, data) {
+  let datos = null;
+  try {
+    datos = await POST("/categoria/editar", data,token);
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+
+  return datos;
+}
+export async function cambiarEstadoCategoria(token,externalCategoria) {
+  let datos = null;
+  try {
+    datos = await GET("/categoria/cambiarEstadoCategoria/"+externalCategoria, token);
+  } catch (error) {
+    return error;
+  }
+  console.log(datos.data);
+  return datos.data;
+}

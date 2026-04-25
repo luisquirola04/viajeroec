@@ -2,6 +2,7 @@ const Pais = require("../models/pais");
 const Provincia = require("../models/provincia");
 const Canton = require("../models/canton");
 const Parroquia = require("../models/parroquia");
+const Lugar = require("../models/lugar");
 
 require("dotenv").config();
 const sequelize = require("../config/config");
@@ -185,6 +186,37 @@ class ParroquiaController {
 
 
 
+    async cambiarEstadoParroquia(req, res) {
+    const externalParroquia = req.params.externalParroquia
+    if (!externalParroquia) {
+      return res.status(400).json({
+        msj: "Datos insuficientes",
+        code: 400
+      });
+    }
+    const parroquia = await Parroquia.findOne({
+      where: { external: externalParroquia }
+    })
+    if (!parroquia) {
+      return res.status(400).json({
+        msj: "No se encontro la parroquia",
+        code: 400
+      });
+    }
+    const lugar = await Lugar.findOne({ where: { parroquia: parroquia.id, estado: true } })
+    if (lugar&&parroquia.estado) {
+      return res.status(400).json({
+        msj: "No se puede eliminar la parroquia, tiene lugares asociados",
+        code: 400
+      });
+    }
+    try {
+      await parroquia.update(!parroquia.estado);
+    } catch (error) {
+      return res.status(400).json({ msj: "Hubo un error al editar la Parroquia" });
+
+    }
+  }
 }
 
 module.exports = new ParroquiaController();

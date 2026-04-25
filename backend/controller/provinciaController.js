@@ -1,5 +1,6 @@
 const Pais = require("../models/pais");
 const Provincia = require("../models/provincia");
+const Canton = require("../models/canton");
 
 require("dotenv").config();
 const sequelize = require("../config/config");
@@ -128,8 +129,39 @@ class ProvinciaController {
         .json({ msj: "Hubo un error en la consulta" });
     }
     
-  
+  }
 
+
+    async cambiarEstadoProvincia(req, res) {
+    const externalProvincia = req.params.externalProvincia
+    if (!externalProvincia) {
+      return res.status(400).json({
+        msj: "Datos insuficientes",
+        code: 400
+      });
+    }
+    const provincia = await Provincia.findOne({
+      where: { external: externalProvincia }
+    })
+    if (!provincia) {
+      return res.status(400).json({
+        msj: "No se encontro la provincia",
+        code: 400
+      });
+    }
+    const canton = await Canton.findOne({ where: { provincia: provincia.id, estado: true } })
+    if (canton&&provincia.estado) {
+      return res.status(400).json({
+        msj: "No se puede eliminar la provincia, tiene cantones asociados",
+        code: 400
+      });
+    }
+    try {
+      await provincia.update(!provincia.estado);
+    } catch (error) {
+      return res.status(400).json({ msj: "Hubo un error al editar la Provincia" });
+
+    }
   }
 }
 

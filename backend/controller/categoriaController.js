@@ -178,6 +178,39 @@ if (!externalCategoria) {
       });
   }
 
+
+  async cambiarEstadoCategoria(req, res) {
+    const externalCategoria = req.params.externalCategoria
+    if (!externalCategoria) {
+      return res.status(400).json({
+        msj: "Datos insuficientes",
+        code: 400
+      });
+    }
+    const categoria = await Categoria.findOne({
+      where: { external: externalCategoria }
+    })
+    if (!categoria) {
+      return res.status(400).json({
+        msj: "No se encontro la categoría",
+        code: 400
+      });
+    }
+    const categoriasHijas = await Categoria.findAll({ where: { padreId: categoria.id, estado: true } })
+    if (categoriasHijas&&categoria.estado) {
+      return res.status(400).json({
+        msj: "No se puede eliminar el pais, tiene categorias hijas asociadas",
+        code: 400
+      });
+    }
+    try {
+      await categoria.update(!categoria.estado);
+    } catch (error) {
+      return res.status(400).json({ msj: "Hubo un error al editar la Categoria" });
+
+    }
+  }
+
 }
 
 module.exports = new CategoriaController();

@@ -22,3 +22,36 @@ export async function listarCanton(token) {
   console.log(datos.data);
   return datos.data;
 }
+export async function getCanton(token, externalCanton) {
+  let datos = null;
+  try {
+    datos = await GET("/canton/getCanton/"+externalCanton, token);
+  } catch (error) {
+    return error;
+  }
+  console.log(datos.data);
+  return datos.data;
+}
+
+export async function editarCanton(token, data) {
+  let datos = null;
+  try {
+    datos = await POST("/canton/editar", data,token);
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+
+  return datos;
+}
+
+export async function cambiarEstadoCanton(token,externalCanton) {
+  let datos = null;
+  try {
+    datos = await GET("/canton/cambiarEstadoCanton/"+externalCanton, token);
+  } catch (error) {
+    return error;
+  }
+  console.log(datos.data);
+  return datos.data;
+}
