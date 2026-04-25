@@ -5,8 +5,8 @@ const auth = require("../middleware/AuthAdmin");
 
 router.get('/get', PaisController.getPaisesActivos);
 router.post('/crear', auth,PaisController.crearPais);
-
-
+router.get('/getPais', auth, PaisController.getPais);
+router.post('/editar', auth,PaisController.editarPais);
 
 
 module.exports = router;

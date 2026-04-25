@@ -109,19 +109,58 @@ class CantonController {
       });
     }
   }
-  
+
+
+  async getCanton(req, res) {
+    const externalCanton = req.params.externalCanton
+    if (!externalCanton) {
+      return res.status(400).json({
+        msj: "Datos insuficientes",
+        code: 400
+      });
+    }
+    const canton = await Canton.findOne({
+      where: { external: externalCanton }, include: [
+        {
+          model: Provincia,
+          as: "Provincia",
+          include: [
+            {
+              model: Pais,
+              as: "Pais",
+            },
+          ],
+        },
+      ],
+    });
+    if (!canton) {
+      return res.status(400).json({
+        msj: "No se encontro el canton",
+        code: 400
+      });
+    }
+    return res.status(200).json({
+      msj: canton,
+      code: 200
+    });
+  }
 
   async editarCanton(req, res) {
-    const { nombre, info, estado , externalCanton} = req.body;
-    const canton = await Canton.findOne({where:{external:externalCanton}});
-    
+    const { nombre, info, estado, externalCanton } = req.body;
+    const canton = await Canton.findOne({ where: { external: externalCanton } });
+if (!externalCanton) {
+      return res.status(400).json({
+        msj: "Datos insuficientes",
+        code: 400
+      });
+    }
     try {
       await canton.update({
-        nombre:nombre,
-        info:info,
+        nombre: nombre,
+        info: info,
         estado: estado,
       });
-      return res.status(200).json({ msj: "Cantón actualizado correctamente", code:200 });
+      return res.status(200).json({ msj: "Cantón actualizado correctamente", code: 200 });
     } catch (error) {
       console.log(error.message);
       return res.status(400).json({ msj: "Hubo un error al editar el Cantón" });

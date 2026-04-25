@@ -124,6 +124,60 @@ class CategoriaController {
     }
   }
 
+  async editarCategoria(req,res){
+    const{nombre, estado, externalCategoria}= req.body;
+    if (!externalCategoria) {
+      return res.status(400).json({
+        msj: "Datos insuficientes",
+        code: 400
+      });
+    }
+    const categoria = await Categoria.findOne({where:{external:externalCategoria}})
+    if (!categoria) {
+      return res.status(400).json({
+        msj: "No se encuentra la categoría",
+        code: 400
+      });
+    }
+    try {
+      await categoria.update({
+      nombre, estado
+    } )
+     return res.status(200).json({
+        msj: "Categoría guardada correctamente",
+        code: 200,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        msj: "Error en el servidor "+ error.message ,
+        code: 400
+      });
+    }
+    
+  }
+
+  async getCategoria(req,res){
+    const externalCategoria = req.params.externalCategoria;
+if (!externalCategoria) {
+      return res.status(400).json({
+        msj: "Datos insuficientes",
+        code: 400
+      });
+    }
+    const categoria =  await Categoria.findOne({where:{external:externalCategoria}});
+     if (!categoria) {
+      return res.status(400).json({
+        msj: "No se encuentra la categoría",
+        code: 400
+      });
+
+    }
+    return res.status(200).json({
+        categoria,
+        code: 200
+      });
+  }
+
 }
 
 module.exports = new CategoriaController();

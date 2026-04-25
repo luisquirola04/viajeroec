@@ -57,6 +57,28 @@ class PaisController {
       return res.status(400).json({ msj: "Hubo un error al crear el pais" });
     }
   }
+
+  async getPais(req,res){
+    const externalPais = req.params.externalPais;
+if (!externalPais) {
+      return res.status(400).json({
+        msj: "Datos insuficientes",
+        code: 400
+      });
+    }
+    const pais =  await Pais.findOne({where:{external:externalPais}});
+     if (!pais) {
+      return res.status(400).json({
+        msj: "No se encuentra el pais",
+        code: 400
+      });
+
+    }
+    return res.status(200).json({
+        pais,
+        code: 200
+      });
+  }
 }
 
 module.exports = new PaisController();

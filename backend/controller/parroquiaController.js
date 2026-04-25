@@ -125,11 +125,48 @@ class ParroquiaController {
     }
   }
 
+  async getParroquia(req, res) {
+    const externalParroquia = req.params.externalParroquia;
+    if (!externalParroquia) { return res.status(400).json({ msj: "Datos insuficientes" }); }
+    const parroquia = await Parroquia.findOne({
+      where: { external: externalParroquia },
+      include: [
+        {
+          model: Canton,
+          as: "Canton",
+          include: [
+            {
+              model: Provincia,
+              as: "Provincia",
+              include: [
+                {
+                  model: Pais,
+                  as: "Pais",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    if (!parroquia) {
+      return res.status(400).json({ msj: "No se encontró la parroquia" });
+    }
+    return res.status(200).json({
+      code: 200,
+      parroquia,
+    });
+  }
+
+
+
+
 
   async editarParroquia(req, res) {
     const { nombre, info, estado, tipoParroquia, externalParroquia } = req.body;
     const parroquia = await Parroquia.findOne({ where: { external: externalParroquia } });
-if (tipoParroquia != 'RURAL' && tipoParroquia != 'URBANA') {      return res.status(400).json({ msj: "Datos no válidos" });
+    if (tipoParroquia != 'RURAL' && tipoParroquia != 'URBANA') {
+      return res.status(400).json({ msj: "Datos no válidos" });
     }
     try {
       await parroquia.update({

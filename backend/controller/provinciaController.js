@@ -61,7 +61,27 @@ class ProvinciaController {
     }
   }
 
-  
+  async getProvincia(req,res){
+    const externalProvincia= req.params.externalProvincia;
+    if(!externalProvincia){
+            return res.status(400).json({ msj: "Datos insuficientes" });
+
+    }
+           const provincia = await Provincia.findAll({
+        where: { estado: true, paisId: ec.id },
+        include: [
+          {
+            model: Pais,
+            as: 'Pais',
+          }
+        ]
+      });
+      if(!provincia){
+            return res.status(400).json({ msj: "No se encontró la provincia" });
+
+    }
+      return res.status(200).json({ provincia, code: 200 });
+  }
 
   async editarProvincia(req, res) {
     const { nombre, info, estado, imagen, externalProvincia } = req.body;

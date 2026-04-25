@@ -7,6 +7,8 @@ router.get('/get', ParroquiaController.getParroquiasActivas);
 router.post('/crear',auth, ParroquiaController.crearParroquia);
 router.get('/get/:externalCanton', ParroquiaController.getParroquiasActivasCanton);
 
+router.get('/getParroquia', auth,ParroquiaController.getParroquia);
+router.post('/editar',auth, ParroquiaController.editarParroquia);
 
 
 
