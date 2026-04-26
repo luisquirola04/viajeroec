@@ -1,20 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { listarCantonesProvincia } from '../../services/ApiServices'; 
 
 export default function CantonesScreen() {
   const [cantones, setCantones] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); // <-- Nuevo estado
   const params = useLocalSearchParams(); 
   const router = useRouter();
 
   useEffect(() => {
     const cargarCantones = async () => {
-      if (params.external) {
-        const data = await listarCantonesProvincia(params.external);
-        if (data && data.cantones) {
-          setCantones(data.cantones);
+      setIsLoading(true); // Iniciamos carga
+      try {
+        if (params.external) {
+          const data = await listarCantonesProvincia(params.external);
+          if (data && data.cantones) {
+            setCantones(data.cantones);
+          }
         }
+      } catch (error) {
+        console.error("Error al cargar cantones:", error);
+      } finally {
+        setIsLoading(false); // Detenemos carga pase lo que pase
       }
     };
     cargarCantones();
@@ -27,48 +35,56 @@ export default function CantonesScreen() {
         {params.nombreProvincia ? `Cantones de ${params.nombreProvincia}` : 'Seleccione un Cantón'}
       </Text>
 
-      <FlatList
-        data={cantones}
-        keyExtractor={(item: any) => item.id.toString()}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={styles.card}
-            activeOpacity={0.6}
-            onPress={() => {
-                router.push({ 
-                  pathname: "/estructura/parroquia", 
-                  params: { 
-                    external: item.external, 
-                    nombreCanton: item.nombre 
-                  } 
-                });
-            }}
-          >
-            <View style={styles.cardHeader}>
-                <Text style={styles.nombreCanton}>{item.nombre}</Text>
-                
-                <View style={styles.badge}>
-                    <Text style={styles.badgeText}>
-                        {item.Provincia.nombre}, {item.Provincia.Pais.nombre}
-                    </Text>
-                </View>
-            </View>
+      {/* Condicional para mostrar el cargando o la lista */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007bff" />
+          <Text style={styles.loadingText}>Cargando cantones...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={cantones}
+          keyExtractor={(item: any) => item.id.toString()}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              style={styles.card}
+              activeOpacity={0.6}
+              onPress={() => {
+                  router.push({ 
+                    pathname: "/estructura/parroquia", 
+                    params: { 
+                      external: item.external, 
+                      nombreCanton: item.nombre 
+                    } 
+                  });
+              }}
+            >
+              <View style={styles.cardHeader}>
+                  <Text style={styles.nombreCanton}>{item.nombre}</Text>
+                  
+                  <View style={styles.badge}>
+                      <Text style={styles.badgeText}>
+                          {item.Provincia.nombre}, {item.Provincia.Pais.nombre}
+                      </Text>
+                  </View>
+              </View>
 
-            <View style={styles.separator} />
+              <View style={styles.separator} />
 
-            <Text style={styles.descripcion} >
-                {item.info}
-            </Text>
+              <Text style={styles.descripcion} >
+                  {item.info}
+              </Text>
 
-            <Text style={styles.verMas}>Ver parroquias de este cantón &gt;</Text>
+              <Text style={styles.verMas}>Ver parroquias de este cantón &gt;</Text>
 
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No se encontraron cantones registrados.</Text>
-        }
-      />
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No se encontraron cantones registrados.</Text>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -79,6 +95,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa', 
     paddingTop: 10, 
     alignItems: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#6c757d',
+    fontSize: 16,
   },
   tituloHeader: {
     fontSize: 24,

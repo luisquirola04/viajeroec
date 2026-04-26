@@ -17,15 +17,23 @@ const getAtributosCategoria = (nombre: string) => {
 
 export default function CategoriasScreen() {
   const [categorias, setCategorias] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); // <-- Nuevo estado de carga inicial
   const [loadingCheck, setLoadingCheck] = useState(false); // Estado para mostrar carga al verificar hijas
   const params = useLocalSearchParams();
   const router = useRouter();
 
   useEffect(() => {
     const cargarCategorias = async () => {
-      const data = await listarCategorias();
-      if (data && data.categorias) {
-        setCategorias(data.categorias);
+      setIsLoading(true); // Iniciamos carga inicial
+      try {
+        const data = await listarCategorias();
+        if (data && data.categorias) {
+          setCategorias(data.categorias);
+        }
+      } catch (error) {
+        console.error("Error al cargar categorías:", error);
+      } finally {
+        setIsLoading(false); // Detenemos carga inicial
       }
     };
     cargarCategorias();
@@ -120,24 +128,32 @@ export default function CategoriasScreen() {
         </Text>
       </View>
 
-      {/* Spinner de carga superpuesto (opcional pero recomendado) */}
+      {/* Spinner de carga superpuesto para la navegación */}
       {loadingCheck && (
           <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color="#005bea" />
           </View>
       )}
 
-      <FlatList
-        data={categorias}
-        keyExtractor={(item: any) => item.id.toString()}
-        renderItem={renderItem}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.gridContainer}
-        ListEmptyComponent={
-            <Text style={styles.emptyText}>Cargando categorías...</Text>
-        }
-      />
+      {/* Condicional para mostrar el cargando inicial o el grid */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#005bea" />
+          <Text style={styles.loadingText}>Cargando categorías...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={categorias}
+          keyExtractor={(item: any) => item.id.toString()}
+          renderItem={renderItem}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.gridContainer}
+          ListEmptyComponent={
+              <Text style={styles.emptyText}>No se encontraron categorías.</Text>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -150,7 +166,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F7FA', 
   },
-  // Estilo para el spinner
+  // Estilo para el contenedor de carga inicial
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#6c757d',
+    fontSize: 16,
+  },
+  // Estilo para el spinner de navegación (superpuesto)
   loadingOverlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(255,255,255,0.5)', zIndex: 10,

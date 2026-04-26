@@ -10,7 +10,7 @@ router.get('/get/:externalCanton', ParroquiaController.getParroquiasActivasCanto
 router.get('/getParroquia/:externalParroquia', auth,ParroquiaController.getParroquia);
 router.post('/editar',auth, ParroquiaController.editarParroquia);
 
-router.get('/cambiarEstadoParroquia/:externalCanton', ParroquiaController.cambiarEstadoParroquia);
+router.get('/cambiarEstadoParroquia/:externalParroquia', ParroquiaController.cambiarEstadoParroquia);
 
 
 module.exports = router;

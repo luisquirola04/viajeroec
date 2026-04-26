@@ -68,8 +68,8 @@ class ProvinciaController {
             return res.status(400).json({ msj: "Datos insuficientes" });
 
     }
-           const provincia = await Provincia.findAll({
-        where: { estado: true, paisId: ec.id },
+           const provincia = await Provincia.findOne({
+        where: { estado: true, external:externalProvincia },
         include: [
           {
             model: Pais,
@@ -149,15 +149,17 @@ class ProvinciaController {
         code: 400
       });
     }
-    const canton = await Canton.findOne({ where: { provincia: provincia.id, estado: true } })
+    const canton = await Canton.findOne({ where: { provinciaId: provincia.id, estado: true } })
     if (canton&&provincia.estado) {
-      return res.status(400).json({
+      return res.json({
         msj: "No se puede eliminar la provincia, tiene cantones asociados",
         code: 400
       });
     }
     try {
-      await provincia.update(!provincia.estado);
+      await provincia.update({estado:!provincia.estado});
+            return res.status(200).json({ msj: "Provincia eliminada correctamente", code:200 });
+
     } catch (error) {
       return res.status(400).json({ msj: "Hubo un error al editar la Provincia" });
 

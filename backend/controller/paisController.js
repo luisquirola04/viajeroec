@@ -50,7 +50,7 @@ class PaisController {
       await pais.update({
         nombre:nombre,
         info:info,
-        imagen:imagen,
+  imagen: imagen ? imagen : pais.imagen,
         estado: true,
       });
       return res.status(200).json({ msj: "Pais creado correctamente", code:200 });
@@ -85,6 +85,7 @@ if (!externalPais) {
 
 
     async cambiarEstadoPais(req, res) {
+      console.log("aaadad")
     const externalPais = req.params.externalPais
     if (!externalPais) {
       return res.status(400).json({
@@ -101,15 +102,23 @@ if (!externalPais) {
         code: 400
       });
     }
+          console.log("acahasta")
+
     const provincia = await Provincia.findOne({ where: { paisId: pais.id, estado: true } })
     if (provincia&&pais.estado) {
-      return res.status(400).json({
+      return res.json({
         msj: "No se puede eliminar el pais, tiene provincia asociadas",
         code: 400
       });
     }
     try {
-      await pais.update(!pais.estado);
+                console.log("lohara")
+
+      await pais.update({ estado: !pais.estado });
+          return res.status(200).json({
+        msg:"Pais actualizado correctamente",
+        code: 200
+      });
     } catch (error) {
       return res.status(400).json({ msj: "Hubo un error al editar el Pais" });
 

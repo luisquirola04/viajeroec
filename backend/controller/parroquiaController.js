@@ -187,7 +187,10 @@ class ParroquiaController {
 
 
     async cambiarEstadoParroquia(req, res) {
+      console.log("error1111")
+
     const externalParroquia = req.params.externalParroquia
+    console.log(req.params.externalParroquia)
     if (!externalParroquia) {
       return res.status(400).json({
         msj: "Datos insuficientes",
@@ -203,18 +206,20 @@ class ParroquiaController {
         code: 400
       });
     }
-    const lugar = await Lugar.findOne({ where: { parroquia: parroquia.id, estado: true } })
+    const lugar = await Lugar.findOne({ where: { parroquiaId: parroquia.id, estado: true } })
     if (lugar&&parroquia.estado) {
-      return res.status(400).json({
+      return res.json({
         msj: "No se puede eliminar la parroquia, tiene lugares asociados",
         code: 400
       });
     }
     try {
-      await parroquia.update(!parroquia.estado);
+await parroquia.update({ estado: !parroquia.estado });
+      return res.status(200).json({ msj: "Parroquia actualizada correctamente", code: 200 });
+
     } catch (error) {
       return res.status(400).json({ msj: "Hubo un error al editar la Parroquia" });
-
+console.log("error")
     }
   }
 }

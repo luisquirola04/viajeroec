@@ -3,12 +3,16 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Link from "next/link";
-import { listarCanton } from "@/hooks/ServiceCanton"; 
+import { listarCanton, cambiarEstadoCanton } from "@/hooks/ServiceCanton"; // Asegúrate de tener cambiarEstadoCanton
 import Swal from "sweetalert2";
 
 export default function ListaCantones() {
   const [cantones, setCantones] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Estados para filtros
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("todos");
 
   useEffect(() => {
     cargarDatos();
@@ -38,6 +42,48 @@ export default function ListaCantones() {
     }
   };
 
+  const manejarEliminar = async (external: string) => {
+    const token = sessionStorage.getItem("token");
+    if (!token) return;
+
+    const confirmacion = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: "Se cambiará el estado de este cantón.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#0d9488',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'Sí, continuar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (confirmacion.isConfirmed) {
+      Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try {
+        const respuesta = await cambiarEstadoCanton(token, external);
+        if (respuesta && respuesta.code === 200) {
+            Swal.fire('¡Actualizado!', 'El estado del cantón ha cambiado.', 'success');
+            setCantones((prev) => prev.filter((c: any) => c.external !== external));
+        } else {
+            Swal.fire('Error', respuesta?.msj || 'No se pudo completar la acción.', 'error');
+        }
+      } catch (error) {
+        Swal.fire('Error', 'Ocurrió un problema en el servidor.', 'error');
+      }
+    }
+  };
+
+  const cantonesFiltrados = cantones.filter((canton: any) => {
+    const coincideBusqueda = canton.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
+                             (canton.info && canton.info.toLowerCase().includes(busqueda.toLowerCase()));
+    
+    const coincideEstado = filtroEstado === "todos" ? true :
+                           filtroEstado === "activos" ? canton.estado === true : 
+                           canton.estado === false;
+
+    return coincideBusqueda && coincideEstado;
+  });
+
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
@@ -60,6 +106,23 @@ export default function ListaCantones() {
             </Link>
         </div>
 
+        {/* Filtros y Buscador */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </div>
+                <input type="text" placeholder="Buscar por nombre o descripción..." className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-xl focus:ring-teal-500 focus:border-teal-500" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+            </div>
+            <div className="w-full md:w-64">
+                <select className="block w-full pl-3 pr-10 py-2 border border-slate-300 rounded-xl focus:ring-teal-500 focus:border-teal-500" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
+                    <option value="todos">Todos los estados</option>
+                    <option value="activos">Solo Activos</option>
+                    <option value="inactivos">Solo Inactivos</option>
+                </select>
+            </div>
+        </div>
+
         {/* Carga o Lista */}
         {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -69,27 +132,23 @@ export default function ListaCantones() {
             </div>
         ) : (
             <>
-                {cantones.length === 0 ? (
+                {cantonesFiltrados.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
                         <div className="bg-slate-50 p-4 rounded-full mb-3">
                              <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                         </div>
-                        <p className="text-slate-500 text-lg font-medium">No hay cantones registrados</p>
-                        <p className="text-slate-400 text-sm">Registra el primero.</p>
+                        <p className="text-slate-500 text-lg font-medium">No se encontraron resultados</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10">
-                        {cantones.map((canton) => {
-                            // Extraemos datos de jerarquía
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10 items-start">
+                        {cantonesFiltrados.map((canton: any) => {
                             const provincia = canton.Provincia;
                             const pais = provincia?.Pais;
 
                             return (
-                                <div key={canton.external} className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 flex flex-col h-full">
-                                    
+                                <div key={canton.external} className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 flex flex-col h-auto">
                                     <div className="p-6 flex flex-col flex-1">
                                             
-                                            {/* Header de la Tarjeta */}
                                             <div className="flex justify-between items-start mb-4">
                                                 <h3 className="text-xl font-bold text-slate-800 mb-1 line-clamp-1 flex-1 pr-2" title={canton.nombre}>
                                                     {canton.nombre}
@@ -97,19 +156,14 @@ export default function ListaCantones() {
                                                 <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${canton.estado ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500'}`} title={canton.estado ? 'Activo' : 'Inactivo'}></div>
                                             </div>
 
-                                            {/* --- BLOQUE DE JERARQUÍA (UBICACIÓN) --- */}
                                             <div className="mb-4 bg-slate-50 rounded-lg p-3 border border-slate-100 flex flex-col gap-2">
-                                                {/* Fila País */}
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] uppercase font-bold text-slate-400 w-16">País</span>
                                                     <span className="text-xs font-semibold text-slate-700 truncate flex-1">
                                                         {pais?.nombre || "Sin País"}
                                                     </span>
                                                 </div>
-                                                
                                                 <div className="h-px bg-slate-200 w-full"></div>
-
-                                                {/* Fila Provincia */}
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] uppercase font-bold text-slate-400 w-16">Provincia</span>
                                                     <span className="text-xs font-bold text-teal-600 truncate flex-1">
@@ -118,19 +172,25 @@ export default function ListaCantones() {
                                                 </div>
                                             </div>
 
-                                            <p className="text-slate-500 text-sm mb-4 line-clamp-3 flex-1">
+                                            {/* Texto completo visible */}
+                                            <div className="text-slate-500 text-sm mb-4 flex-1 whitespace-pre-wrap">
                                                 {canton.info}
-                                            </p>
+                                            </div>
 
-                                            {/* Botones */}
-                                            <div className="pt-4 border-t border-slate-100 mt-auto">
+                                            {/* Botones Edit/Delete compartiendo espacio */}
+                                            <div className="pt-4 border-t border-slate-100 flex gap-3 mt-auto">
                                                 <Link 
                                                     href={`/admin/canton/editar/${canton.external}`}
-                                                    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-sm font-medium hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200 transition-all"
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition-colors text-sm font-medium"
                                                 >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                                    Editar Cantón
+                                                    Editar
                                                 </Link>
+                                                <button 
+                                                    onClick={() => manejarEliminar(canton.external)} 
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors text-sm font-medium"
+                                                >
+                                                    Eliminar
+                                                </button>
                                             </div>
                                     </div>
                                 </div>

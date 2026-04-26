@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, Fragment } from "react"; // <--- AQUÍ FALTABA IMPORTAR FRAGMENT
+import { useEffect, useState, Fragment } from "react"; 
 import Sidebar from "@/components/Sidebar";
 import Link from "next/link";
-import { listarCategoria, listarCategoriasHijas } from '@/hooks/ServiceCategoria'; 
+import { listarCategoria, listarCategoriasHijas, cambiarEstadoCategoria } from '@/hooks/ServiceCategoria'; 
 import Swal from "sweetalert2";
 
 export default function ListaCategorias() {
@@ -12,21 +12,27 @@ export default function ListaCategorias() {
   
   // ESTADOS PARA EL ACORDEÓN
   const [expandedId, setExpandedId] = useState(null); 
-  const [hijasData, setHijasData] = useState({}); 
+  const [hijasData, setHijasData] = useState<any>({}); 
   const [loadingHijas, setLoadingHijas] = useState(false);
 
   useEffect(() => {
-    const cargar = async () => {
-        const token = sessionStorage.getItem("token");
-        try {
-            const res = await listarCategoria(token);
-            if (res && res.categorias) setCategorias(res.categorias);
-        } catch (error) { console.error(error); } finally { setLoading(false); }
-    };
     cargar();
   }, []);
 
-  const toggleHijas = async (categoria) => {
+  const cargar = async () => {
+      const token = sessionStorage.getItem("token");
+      if (!token) return;
+      try {
+          const res = await listarCategoria(token);
+          if (res && res.categorias) setCategorias(res.categorias);
+      } catch (error) { 
+          console.error(error); 
+      } finally { 
+          setLoading(false); 
+      }
+  };
+
+  const toggleHijas = async (categoria: any) => {
     if (expandedId === categoria.id) {
         setExpandedId(null);
         return;
@@ -39,11 +45,10 @@ export default function ListaCategorias() {
     const token = sessionStorage.getItem("token");
     try {
         const res = await listarCategoriasHijas(token, categoria.external);
-        console.log(res)
         if (res && res.categorias) {
-            setHijasData(prev => ({ ...prev, [categoria.id]: res.categorias }));
+            setHijasData((prev: any) => ({ ...prev, [categoria.id]: res.categorias }));
         } else {
-            setHijasData(prev => ({ ...prev, [categoria.id]: res.categorias || [] }));
+            setHijasData((prev: any) => ({ ...prev, [categoria.id]: [] }));
         }
     } catch (error) {
         console.error("Error cargando hijas", error);
@@ -52,12 +57,59 @@ export default function ListaCategorias() {
     }
   };
 
+  // NUEVA FUNCIÓN: Manejar Eliminar (Cambio de Estado)
+  const manejarEliminar = async (external: string) => {
+    const token = sessionStorage.getItem("token");
+    if (!token) return;
+
+    const confirmacion = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: "Se cambiará el estado de esta categoría.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#0d9488',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'Sí, continuar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (confirmacion.isConfirmed) {
+      Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try {
+        const respuesta = await cambiarEstadoCategoria(token, external);
+        Swal.close();
+
+        if (respuesta && respuesta.code === 200) {
+            Swal.fire('¡Actualizado!', 'El estado ha cambiado.', 'success');
+            console.log(respuesta)
+            // Actualizamos visualmente las categorías padre
+            setCategorias((prev: any) => 
+                prev.map((c: any) => c.external === external ? { ...c, estado: !c.estado } : c)
+            );
+
+            // Actualizamos visualmente las categorías hijas si están abiertas
+            setHijasData((prev: any) => {
+                const newData = { ...prev };
+                for (const key in newData) {
+                    newData[key] = newData[key].map((h: any) => h.external === external ? { ...h, estado: !h.estado } : h);
+                }
+                return newData;
+            });
+        } else {
+            Swal.fire('Error', respuesta?.msj || 'No se pudo completar la acción.', 'error');
+        }
+      } catch (error) {
+        Swal.close();
+        Swal.fire('Error', 'Ocurrió un problema de conexión.', 'error');
+      }
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
       <main className="flex-1 p-6 md:p-10 overflow-y-auto h-screen">
         
-        {/* Encabezado */}
         <div className="flex justify-between items-center mb-8">
             <div>
                 <h1 className="text-3xl font-bold text-slate-800">Categorías</h1>
@@ -92,7 +144,7 @@ export default function ListaCategorias() {
                                     </td>
                                 </tr>
                             ) : (
-                                categorias.map((cat, index) => (
+                                categorias.map((cat: any, index: number) => (
                                     <Fragment key={cat.id}>
                                         {/* FILA PADRE */}
                                         <tr className={`transition-colors duration-200 ${expandedId === cat.id ? 'bg-teal-50/50' : 'hover:bg-slate-50/80'}`}>
@@ -120,12 +172,16 @@ export default function ListaCategorias() {
                                                             ? 'bg-teal-100 text-teal-700' 
                                                             : 'text-slate-400 hover:text-teal-600 hover:bg-teal-50'}`}
                                                 >
-                                                     {expandedId === cat.id ? 'Ocultar' : 'Ver Hijas'}
+                                                     {expandedId === cat.id ? 'Ocultar' : 'Ver Subcategorías'}
                                                     <svg className={`w-4 h-4 transform transition-transform ${expandedId === cat.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                                 </button>
                                                 
-                                                <button className="text-slate-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50">
+                                                <Link href={`/admin/categoria/editar/${cat.external}`} className="text-slate-400 hover:text-teal-600 transition-colors p-2 rounded-lg hover:bg-teal-50" title="Editar">
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                </Link>
+
+                                                <button onClick={() => manejarEliminar(cat.external)} className="text-slate-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50" title="Eliminar/Restaurar">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                 </button>
                                             </td>
                                         </tr>
@@ -143,10 +199,22 @@ export default function ListaCategorias() {
                                                             <div className="text-sm text-slate-400 italic">Cargando subcategorías...</div>
                                                         ) : hijasData[cat.id] && hijasData[cat.id].length > 0 ? (
                                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                                {hijasData[cat.id].map((hija) => (
-                                                                    <div key={hija.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                                                                        <span className="text-sm text-slate-700 font-medium">{hija.nombre}</span>
-                                                                        <span className={`w-2 h-2 rounded-full ${hija.estado ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                                                                {hijasData[cat.id].map((hija: any) => (
+                                                                    <div key={hija.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${hija.estado ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                                                                            <span className={`text-sm font-medium ${hija.estado ? 'text-slate-700' : 'text-slate-400 line-through'}`}>{hija.nombre}</span>
+                                                                        </div>
+                                                                        
+                                                                        {/* Acciones para las hijas */}
+                                                                        <div className="flex gap-1">
+                                                                            <Link href={`/admin/categoria/editar/${hija.external}`} className="text-slate-300 hover:text-teal-600 p-1" title="Editar Subcategoría">
+                                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                                                            </Link>
+                                                                            <button onClick={() => manejarEliminar(hija.external)} className="text-slate-300 hover:text-red-600 p-1" title="Cambiar Estado">
+                                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
                                                                 ))}
                                                             </div>

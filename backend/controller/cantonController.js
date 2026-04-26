@@ -113,6 +113,7 @@ class CantonController {
 
 
   async getCanton(req, res) {
+
     const externalCanton = req.params.externalCanton
     if (!externalCanton) {
       return res.status(400).json({
@@ -141,17 +142,28 @@ class CantonController {
       });
     }
     return res.status(200).json({
-      msj: canton,
+       canton,
       code: 200
     });
   }
 
   async editarCanton(req, res) {
+            console.log("aaaaa")
+   
+    console.log(req.body)
+
     const { nombre, info, estado, externalCanton } = req.body;
-    const canton = await Canton.findOne({ where: { external: externalCanton } });
-    if (!externalCanton) {
+    console.log(req.body)
+      if (!externalCanton) {
       return res.status(400).json({
-        msj: "Datos insuficientes",
+        msj: "Datos insuficientes1",
+        code: 400
+      });
+    }
+    const canton = await Canton.findOne({ where: { external: externalCanton } });
+    if (!canton) {
+      return res.status(400).json({
+        msj: "No se pudo encontrar el Canton",
         code: 400
       });
     }
@@ -186,13 +198,20 @@ class CantonController {
     }
     const parroquia = await Parroquia.findOne({ where: { cantonId: canton.id, estado: true } })
     if (parroquia&&canton.estado) {
-      return res.status(400).json({
+      return res.json({
         msj: "No se puede eliminar el canton, tiene parroquias asociadas",
         code: 400
       });
     }
     try {
-      await canton.update(!canton.estado);
+      console.log("aqui va a ir")
+      await canton.update({
+  estado: !canton.estado
+});
+            console.log("yafue")
+
+            return res.status(200).json({ msj: "Cantón actualizado correctamente", code: 200 });
+
     } catch (error) {
       return res.status(400).json({ msj: "Hubo un error al editar el Cantón" });
 

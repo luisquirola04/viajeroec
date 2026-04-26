@@ -124,15 +124,15 @@ class CategoriaController {
     }
   }
 
-  async editarCategoria(req,res){
-    const{nombre, estado, externalCategoria}= req.body;
+  async editarCategoria(req, res) {
+    const { nombre, estado, externalCategoria } = req.body;
     if (!externalCategoria) {
       return res.status(400).json({
         msj: "Datos insuficientes",
         code: 400
       });
     }
-    const categoria = await Categoria.findOne({where:{external:externalCategoria}})
+    const categoria = await Categoria.findOne({ where: { external: externalCategoria } })
     if (!categoria) {
       return res.status(400).json({
         msj: "No se encuentra la categoría",
@@ -141,31 +141,31 @@ class CategoriaController {
     }
     try {
       await categoria.update({
-      nombre, estado
-    } )
-     return res.status(200).json({
+        nombre, estado
+      })
+      return res.status(200).json({
         msj: "Categoría guardada correctamente",
         code: 200,
       });
     } catch (error) {
       return res.status(500).json({
-        msj: "Error en el servidor "+ error.message ,
+        msj: "Error en el servidor " + error.message,
         code: 400
       });
     }
-    
+
   }
 
-  async getCategoria(req,res){
+  async getCategoria(req, res) {
     const externalCategoria = req.params.externalCategoria;
-if (!externalCategoria) {
+    if (!externalCategoria) {
       return res.status(400).json({
         msj: "Datos insuficientes",
         code: 400
       });
     }
-    const categoria =  await Categoria.findOne({where:{external:externalCategoria}});
-     if (!categoria) {
+    const categoria = await Categoria.findOne({ where: { external: externalCategoria } });
+    if (!categoria) {
       return res.status(400).json({
         msj: "No se encuentra la categoría",
         code: 400
@@ -173,14 +173,15 @@ if (!externalCategoria) {
 
     }
     return res.status(200).json({
-        categoria,
-        code: 200
-      });
+      categoria,
+      code: 200
+    });
   }
 
 
   async cambiarEstadoCategoria(req, res) {
     const externalCategoria = req.params.externalCategoria
+    console.log(req.params.externalCategoria)
     if (!externalCategoria) {
       return res.status(400).json({
         msj: "Datos insuficientes",
@@ -197,17 +198,21 @@ if (!externalCategoria) {
       });
     }
     const categoriasHijas = await Categoria.findAll({ where: { padreId: categoria.id, estado: true } })
-    if (categoriasHijas&&categoria.estado) {
-      return res.status(400).json({
-        msj: "No se puede eliminar el pais, tiene categorias hijas asociadas",
+    if (categoriasHijas.length > 0 && categoria.estado) {
+      return res.json({
+        msj: "No se puede eliminar la categoria, tiene categorias hijas asociadas",
         code: 400
       });
     }
     try {
-      await categoria.update(!categoria.estado);
+      await categoria.update({ estado: !categoria.estado });
+      return res.status(200).json({
+        msj: "Categoría actualizada correctamente",
+        code: 200
+      });
     } catch (error) {
       return res.status(400).json({ msj: "Hubo un error al editar la Categoria" });
-
+      
     }
   }
 

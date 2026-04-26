@@ -1,22 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { listarParroquiasCanton } from '../../services/ApiServices'; 
 
 export default function ParroquiasScreen() {
   const [parroquias, setParroquias] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); // <-- Nuevo estado
   const params = useLocalSearchParams(); 
   const router = useRouter();
 
   useEffect(() => {
     const cargarParroquias = async () => {
-      if (params.external) {
-        console.log("Cargando parroquias del cantón:", params.external);
-        const data = await listarParroquiasCanton(params.external);
-        
-        if (data && data.parroquias) {
-          setParroquias(data.parroquias);
+      setIsLoading(true); // Iniciamos carga
+      try {
+        if (params.external) {
+          console.log("Cargando parroquias del cantón:", params.external);
+          const data = await listarParroquiasCanton(params.external);
+          
+          if (data && data.parroquias) {
+            setParroquias(data.parroquias);
+          }
         }
+      } catch (error) {
+        console.error("Error al cargar parroquias:", error);
+      } finally {
+        setIsLoading(false); // Detenemos carga
       }
     };
     cargarParroquias();
@@ -24,72 +32,72 @@ export default function ParroquiasScreen() {
 
   return (
     <View style={styles.container}>
+      <Stack.Screen options={{}} />
 
-      <Stack.Screen 
-        options={{
-          
-        }} 
-      />
-
-      
       <Text style={styles.tituloHeader}>
         {params.nombreCanton ? `Parroquias de ${params.nombreCanton}` : 'Parroquias'}
       </Text>
 
-      <FlatList
-        data={parroquias}
-        keyExtractor={(item: any) => item.id.toString()}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={styles.card}
-            activeOpacity={0.7}
-           
-            onPress={() => {
-                router.push({
-                    pathname: "/categorias", 
-                    params: { 
-                        
-                        nombreParroquia: item.nombre, 
-                        parroquiaExternal: item.external 
-                    }
-                });
-            }}
-          >
-            <View style={styles.cardHeader}>
-                <Text style={styles.nombreParroquia}>{item.nombre}</Text>
-                
-                {/* Badge para el TIPO DE PARROQUIA (Urbana/Rural) */}
-                <View style={[
-                    styles.badgeTipo, 
-                    item.tipoParroquia === 'URBANA' ? styles.badgeUrbana : styles.badgeRural
-                ]}>
-                    <Text style={styles.badgeTextTipo}>{item.tipoParroquia}</Text>
-                </View>
-            </View>
+      {/* Condicional para mostrar el cargando o la lista */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#28a745" />
+          <Text style={styles.loadingText}>Cargando parroquias...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={parroquias}
+          keyExtractor={(item: any) => item.id.toString()}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              style={styles.card}
+              activeOpacity={0.7}
+              onPress={() => {
+                  router.push({
+                      pathname: "/categorias", 
+                      params: { 
+                          nombreParroquia: item.nombre, 
+                          parroquiaExternal: item.external 
+                      }
+                  });
+              }}
+            >
+              <View style={styles.cardHeader}>
+                  <Text style={styles.nombreParroquia}>{item.nombre}</Text>
+                  
+                  {/* Badge para el TIPO DE PARROQUIA (Urbana/Rural) */}
+                  <View style={[
+                      styles.badgeTipo, 
+                      item.tipoParroquia === 'URBANA' ? styles.badgeUrbana : styles.badgeRural
+                  ]}>
+                      <Text style={styles.badgeTextTipo}>{item.tipoParroquia}</Text>
+                  </View>
+              </View>
 
-            {/* Ubicación Jerárquica */}
-            <View style={styles.ubicacionContainer}>
-                <Text style={styles.ubicacionLabel}>Ubicación:</Text>
-                <Text style={styles.ubicacionTexto}>
-                   {item.Canton.nombre}, {item.Canton.Provincia.nombre}
-                </Text>
-            </View>
+              {/* Ubicación Jerárquica */}
+              <View style={styles.ubicacionContainer}>
+                  <Text style={styles.ubicacionLabel}>Ubicación:</Text>
+                  <Text style={styles.ubicacionTexto}>
+                    {item.Canton.nombre}, {item.Canton.Provincia.nombre}
+                  </Text>
+              </View>
 
-            <View style={styles.separator} />
+              <View style={styles.separator} />
 
-            <Text style={styles.descripcion}>
-                {item.info}
-            </Text>
+              <Text style={styles.descripcion}>
+                  {item.info}
+              </Text>
 
-            <Text style={styles.verMas}>Ver categorias &gt;</Text>
+              <Text style={styles.verMas}>Ver categorias &gt;</Text>
 
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No hay parroquias registradas.</Text>
-        }
-      />
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No hay parroquias registradas.</Text>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -100,6 +108,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     paddingTop: 10, 
     alignItems: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#6c757d',
+    fontSize: 16,
   },
   tituloHeader: {
     fontSize: 22,
@@ -120,7 +138,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 3,
-   
     borderLeftWidth: 5, 
     borderLeftColor: '#28a745', 
   },

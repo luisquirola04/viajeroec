@@ -5,9 +5,8 @@ import { Image } from 'expo-image';
 import { listarProvinciasEc } from '../../services/ApiServices';
 import ListaRecargable from '../../components/listaRecargable';
 
-// --- 1. LÓGICA DE ESCALADO (Adaptable a cualquier pantalla) ---
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const scale = SCREEN_WIDTH / 375; // 375 es el ancho base de un iPhone estándar
+const scale = SCREEN_WIDTH / 375; 
 
 function normalize(size) {
   const newSize = size * scale;
@@ -17,7 +16,6 @@ function normalize(size) {
     return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
   }
 }
-// -------------------------------------------------------------
 
 export default function ProvinciasScreen() {
   const router = useRouter();
@@ -30,7 +28,6 @@ export default function ProvinciasScreen() {
   };
 
   const renderCard = ({ item }) => {
-    // Validación segura para que no salga solo "En"
     const nombrePais = (item.Pais && item.Pais.nombre) ? item.Pais.nombre : 'Ecuador';
 
     return (
@@ -46,7 +43,7 @@ export default function ProvinciasScreen() {
       >
         <Text 
           style={styles.nombreProvincia} 
-          adjustsFontSizeToFit={true} // Reduce el texto si es muy largo para el ancho
+          adjustsFontSizeToFit={true} 
           numberOfLines={1} 
         >
           {item.nombre}
@@ -56,16 +53,18 @@ export default function ProvinciasScreen() {
           <Text style={styles.paisTexto}>📍 En {nombrePais}</Text>
         </View>
 
+        {/* --- Imagen con política de caché estricta --- */}
         <Image
           source={optimizarImagen(item.imagen)}
           style={styles.imagen}
           contentFit="cover"
           transition={500}
+          cachePolicy="memory-disk"
         />
         
         <Text 
           style={styles.descripcion}
-          maxFontSizeMultiplier={1.1} // Evita que el texto crezca demasiado si el usuario tiene Zoom activado
+          maxFontSizeMultiplier={1.1} 
         >
           {item.info}
         </Text>
@@ -94,7 +93,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tituloHeader: {
-    fontSize: normalize(24), // Usamos normalize
+    fontSize: normalize(24), 
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#333',
@@ -106,12 +105,9 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     padding: 15,
     marginBottom: 20,
-    
-    // CAMBIOS CLAVE PARA RESPONSIVIDAD:
-    width: '90%',        // Ocupa el 90% del ancho disponible (ya no 340 fijo)
-    maxWidth: 400,       // Tope máximo para que no se vea gigante en tablets
-    alignSelf: 'center', // Centrado automático
-    
+    width: '90%',       
+    maxWidth: 400,       
+    alignSelf: 'center', 
     alignItems: 'center',
     elevation: 4,
     shadowColor: '#000',
@@ -120,12 +116,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   nombreProvincia: {
-    fontSize: normalize(22), // Usamos normalize
+    fontSize: normalize(22), 
     fontWeight: 'bold',
     marginBottom: 5,
     color: '#333',
     textAlign: 'center',
-    width: '100%', // Asegura que el texto use todo el ancho y no se corte
+    width: '100%', 
   },
   badgeContainer: {
     backgroundColor: '#e6f0ff',
@@ -135,24 +131,24 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   paisTexto: {
-    fontSize: normalize(14), // Usamos normalize
+    fontSize: normalize(14), 
     color: '#0056b3',
     fontWeight: '600',
   },
   imagen: {
-    width: '100%', // La imagen se adapta al ancho de la tarjeta
+    width: '100%', 
     height: 200,
     borderRadius: 10,
     marginBottom: 10,
     backgroundColor: '#e1e4e8',
   },
   descripcion: {
-    fontSize: normalize(14), // Usamos normalize
+    fontSize: normalize(14), 
     color: '#444',
-    textAlign: 'left', // Cambiado a left para mejor lectura
+    textAlign: 'left', 
     paddingHorizontal: 4,
-    lineHeight: normalize(20), // Line height también se normaliza
+    lineHeight: normalize(20), 
     marginTop: 10,
-    width: '100%', // IMPORTANTE: Evita que el texto se corte a los lados
+    width: '100%', 
   }
 });

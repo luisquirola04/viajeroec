@@ -47,7 +47,7 @@ export async function editarParroquia(token, data) {
   return datos;
 }
 
-export async function cambiarEstadoParroquia(token,externalParroquia) {
+export async function cambiarEstadoParroquia(token, externalParroquia) {
   let datos = null;
   try {
     datos = await GET("/parroquia/cambiarEstadoParroquia/"+externalParroquia, token);
