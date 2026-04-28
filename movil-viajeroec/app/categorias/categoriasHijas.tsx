@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, StatusBar, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { obtenerCategoriasHijas } from '../../services/ApiServices'; // Asegúrate de importar tu hook
+import { obtenerCategoriasHijas } from '../../services/ApiServices';
 
 // --- LÓGICA DE ICONOS (Reutilizada) ---
 const getAtributosCategoria = (nombre: string) => {
@@ -17,19 +17,28 @@ const getAtributosCategoria = (nombre: string) => {
 
 export default function CategoriasHijasScreen() {
   const [subcategorias, setSubcategorias] = useState([]);
+  const [cargando, setCargando] = useState(true); // <-- 1. NUEVO ESTADO DE CARGA
+  
   const params = useLocalSearchParams();
   const router = useRouter();
 
   useEffect(() => {
     const cargarSubcategorias = async () => {
-      if (params.externalPadre) {
-        // Llamamos al backend buscando las hijas del ID recibido
-        const data = await obtenerCategoriasHijas(params.externalPadre);
-        if (data && data.categorias) {
-          setSubcategorias(data.categorias);
+      setCargando(true); // Aseguramos que inicie en cargando
+      try {
+        if (params.externalPadre) {
+          const data = await obtenerCategoriasHijas(params.externalPadre);
+          if (data && data.categorias) {
+            setSubcategorias(data.categorias);
+          }
         }
+      } catch (error) {
+          console.error("Error cargando subcategorías:", error);
+      } finally {
+          setCargando(false); // <-- 2. Apagamos el loader independientemente de si hay datos o error
       }
     };
+    
     cargarSubcategorias();
   }, [params.externalPadre]);
 
@@ -40,13 +49,12 @@ export default function CategoriasHijasScreen() {
         style={styles.card}
         activeOpacity={0.7}
         onPress={() => {
-          // Desde aquí SIEMPRE vamos a la lista de lugares, porque ya estamos en el último nivel
           router.push({
              pathname: "/categorias/categoriaElegida", 
              params: {
                  nombreCategoria: item.nombre,
-                 externalCategoria: item.external, // ID de la subcategoría
-                 externalParroquia: params.externalParroquia // Pasamos el ID de la parroquia que venía arrastrando
+                 externalCategoria: item.external,
+                 externalParroquia: params.externalParroquia
              }
           });
         }}
@@ -64,43 +72,48 @@ export default function CategoriasHijasScreen() {
       <StatusBar barStyle="light-content" backgroundColor="#005bea" />
       <Stack.Screen options={{ headerShown: false }} /> 
       
-      {/* BANNER REUTILIZADO (Azul) */}
       <View style={styles.banner}>
         <View style={styles.headerRow}>
-            <TouchableOpacity 
-                onPress={() => router.back()} 
-                style={styles.backButton}
-            >
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                 <Ionicons name="arrow-back" size={24} color="#ffffff" />
             </TouchableOpacity>
-
             <Text style={styles.bannerTitle}>
                 {params.nombrePadre || 'Subcategorías'}
             </Text>
             <View style={{width: 30}} />
         </View>
-
         <Text style={styles.bannerSubtitle}>
             Selecciona una opción específica:
         </Text>
       </View>
 
-      <FlatList
-        data={subcategorias}
-        keyExtractor={(item: any) => item.id.toString()}
-        renderItem={renderItem}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.gridContainer}
-        ListEmptyComponent={
-            <Text style={styles.emptyText}>No se encontraron subcategorías.</Text>
-        }
-      />
+      {/* 3. LÓGICA CONDICIONAL: Mostramos el loader O la lista */}
+      {cargando ? (
+        <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#1565C0" />
+            <Text style={styles.loaderText}>Buscando opciones...</Text>
+        </View>
+      ) : (
+        <FlatList
+            data={subcategorias}
+            keyExtractor={(item: any) => item.id.toString()}
+            renderItem={renderItem}
+            numColumns={2}
+            columnWrapperStyle={styles.row}
+            contentContainerStyle={styles.gridContainer}
+            ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                    <Ionicons name="search-outline" size={48} color="#ccc" />
+                    <Text style={styles.emptyText}>No se encontraron subcategorías para esta opción.</Text>
+                </View>
+            }
+        />
+      )}
     </View>
   );
 }
 
-// ESTILOS (Mismos que el index para mantener consistencia)
+// ESTILOS
 const { width } = Dimensions.get('window');
 const cardSize = (width - 50) / 2;
 
@@ -122,5 +135,10 @@ const styles = StyleSheet.create({
   },
   iconContainer: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
   cardText: { fontSize: 14, fontWeight: '600', color: '#455A64', textAlign: 'center' },
-  emptyText: { textAlign: 'center', marginTop: 50, color: '#aaa', fontSize: 16 }
+  
+  // Nuevos estilos para el loader y el empty state
+  loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
+  loaderText: { marginTop: 15, color: '#555', fontSize: 16, fontWeight: '500' },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 },
+  emptyText: { textAlign: 'center', marginTop: 15, color: '#888', fontSize: 16, paddingHorizontal: 30 }
 });

@@ -39,9 +39,92 @@ const LugarCard = React.memo(({ lugar, onDelete, onLocate }) => {
     setCurrentIndex((prev) => (prev === 0 ? galeria.length - 1 : prev - 1));
   };
 
-  const isVideo = (url) => url.includes(".mp4") || url.includes(".webm") || url.includes("video");
+  // Validación segura para evitar crasheos si la URL es indefinida
+  const isVideo = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    const u = url.toLowerCase();
+    return u.includes(".mp4") || u.includes(".webm") || u.includes("video");
+  };
+
+  // Función para obtener miniatura de YouTube si es un link
+  const obtenerMiniatura = (url) => {
+    if (!url || typeof url !== 'string') return "";
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        const id = (match && match[2].length === 11) ? match[2] : null;
+        return id ? `https://img.youtube.com/vi/${id}/0.jpg` : url;
+    }
+    return url;
+  };
 
   const isActivo = lugar.estado !== false && lugar.estado !== 0 && lugar.estado !== "inactivo";
+
+  // --- RENDERIZADO SEGURO DE MULTIMEDIA ---
+  const renderMedia = () => {
+    if (galeria.length === 0) {
+      return <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50"><span className="text-xs">Sin imágenes</span></div>;
+    }
+
+    // EXTRAE LA URL DE FORMA SEGURA (Soporta strings puros u objetos)
+    const item = galeria[currentIndex];
+    const urlOriginal = typeof item === 'string' ? item : (item?.url || item?.enlace || "");
+    
+    if (!urlOriginal) {
+        return <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-50"><span className="text-xs">Archivo no disponible</span></div>;
+    }
+
+    const isYoutube = urlOriginal.includes('youtube.com') || urlOriginal.includes('youtu.be');
+    const isVid = isVideo(urlOriginal);
+
+    // Si es YouTube, mostramos la miniatura con un badge
+    if (isYoutube) {
+        return (
+            <div className="relative w-full h-full">
+                <img 
+                    src={obtenerMiniatura(urlOriginal)} 
+                    alt={lugar.nombre} 
+                    loading="lazy"   
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10 pointer-events-none">
+                    <span className="bg-red-600/90 text-white text-[10px] font-bold px-2 py-1 rounded shadow">YOUTUBE</span>
+                </div>
+            </div>
+        );
+    }
+    
+    let urlOptimizada = urlOriginal;
+    
+    if (urlOptimizada.includes('cloudinary')) {
+        if (isVid) {
+            urlOptimizada = urlOptimizada.replace('/upload/', '/upload/q_auto,f_auto/');
+        } else {
+            urlOptimizada = urlOptimizada.replace('/upload/', '/upload/c_scale,w_400,q_auto,f_auto/');
+        }
+    }
+
+    if (isVid) {
+      return (
+        <video 
+          src={urlOptimizada} 
+          className="w-full h-full object-cover" 
+          controls={true}  
+          preload="none"   
+        />
+      );
+    }
+
+    return (
+      <img 
+        src={urlOptimizada} 
+        alt={lugar.nombre} 
+        loading="lazy"   
+        decoding="async" 
+        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+      />
+    );
+  };
 
   return (
     <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col h-full animate-in fade-in zoom-in duration-300 relative">
@@ -60,46 +143,26 @@ const LugarCard = React.memo(({ lugar, onDelete, onLocate }) => {
 
       {/* CARRUSEL OPTIMIZADO */}
       <div className="relative h-56 w-full bg-slate-100 overflow-hidden">
-        {galeria.length > 0 ? (
+        {renderMedia()}
+
+        {galeria.length > 0 && (
+          <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full z-20 shadow-sm border border-white/20">
+            {currentIndex + 1} / {galeria.length}
+          </div>
+        )}
+
+        {galeria.length > 1 && (
           <>
-            {isVideo(galeria[currentIndex].url) ? (
-              <video 
-                src={galeria[currentIndex].url} 
-                className="w-full h-full object-cover" 
-                controls={true}  
-                preload="none"   
-              />
-            ) : (
-              <img 
-                src={galeria[currentIndex].url} 
-                alt={lugar.nombre} 
-                loading="lazy"   
-                decoding="async" 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-              />
-            )}
-
-            {/* CONTADOR DE MULTIMEDIA */}
-            <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full z-20 shadow-sm border border-white/20">
-              {currentIndex + 1} / {galeria.length}
-            </div>
-
-            {galeria.length > 1 && (
-              <>
-                <button onClick={prevSlide} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                </button>
-                <button onClick={nextSlide} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </button>
-              </>
-            )}
+            <button onClick={prevSlide} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <button onClick={nextSlide} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </button>
           </>
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50"><span className="text-xs">Sin imágenes</span></div>
         )}
         <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-teal-700 text-xs font-bold px-3 py-1 rounded-full shadow-sm border border-white/50 z-20">
-          {lugar.Categoria?.nombre}
+          {lugar.Categoria?.nombre || "Categoría"}
         </span>
       </div>
 
@@ -160,12 +223,12 @@ export default function ListaLugares() {
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(6);
   
-  // NUEVO ESTADO: Controla si el mapa está visible o completamente oculto
   const [isMapVisible, setIsMapVisible] = useState(true);
 
   const [selectedExternal, setSelectedExternal] = useState(null);
   const [busquedaTexto, setBusquedaTexto] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("todos"); 
+  const [categoriaFiltro, setCategoriaFiltro] = useState("");
   const [paisFiltro, setPaisFiltro] = useState("");
   const [provinciaFiltro, setProvinciaFiltro] = useState("");
   const [cantonFiltro, setCantonFiltro] = useState("");
@@ -185,6 +248,12 @@ export default function ListaLugares() {
     };
     cargar();
   }, []);
+
+  // --- OPCIONES DINÁMICAS ---
+  const opcionesCategorias = useMemo(() => {
+    const valores = lugares.map(l => l.Categoria?.nombre);
+    return [...new Set(valores.filter(v => typeof v === 'string' && v.trim() !== ''))].sort();
+  }, [lugares]);
 
   const opcionesPaises = useMemo(() => {
     const valores = lugares.map(l => l.Parroquia?.Canton?.Provincia?.Pais?.nombre);
@@ -212,6 +281,7 @@ export default function ListaLugares() {
     return [...new Set(valores.filter(v => typeof v === 'string' && v.trim() !== ''))];
   }, [lugares, cantonFiltro]);
 
+  // --- FILTRADO GLOBAL ---
   const lugaresFiltrados = useMemo(() => {
     return lugares.filter(l => {
       if (selectedExternal && l.external !== selectedExternal) return false;
@@ -223,6 +293,7 @@ export default function ListaLugares() {
       if (estadoFiltro === "activos" && !esActivo) return false;
       if (estadoFiltro === "desactivos" && esActivo) return false;
 
+      if (categoriaFiltro && l.Categoria?.nombre !== categoriaFiltro) return false;
       if (paisFiltro && l.Parroquia?.Canton?.Provincia?.Pais?.nombre !== paisFiltro) return false;
       if (provinciaFiltro && l.Parroquia?.Canton?.Provincia?.nombre !== provinciaFiltro) return false;
       if (cantonFiltro && l.Parroquia?.Canton?.nombre !== cantonFiltro) return false;
@@ -230,17 +301,18 @@ export default function ListaLugares() {
 
       return true;
     });
-  }, [lugares, selectedExternal, busquedaTexto, estadoFiltro, paisFiltro, provinciaFiltro, cantonFiltro, parroquiaFiltro]);
+  }, [lugares, selectedExternal, busquedaTexto, estadoFiltro, categoriaFiltro, paisFiltro, provinciaFiltro, cantonFiltro, parroquiaFiltro]);
 
   useEffect(() => {
     setVisibleCount(6);
-  }, [busquedaTexto, estadoFiltro, paisFiltro, provinciaFiltro, cantonFiltro, parroquiaFiltro, selectedExternal]);
+  }, [busquedaTexto, estadoFiltro, categoriaFiltro, paisFiltro, provinciaFiltro, cantonFiltro, parroquiaFiltro, selectedExternal]);
 
   const lugaresVisibles = lugaresFiltrados.slice(0, visibleCount);
 
   const limpiarFiltros = () => {
     setBusquedaTexto("");
     setEstadoFiltro("todos");
+    setCategoriaFiltro("");
     setPaisFiltro("");
     setProvinciaFiltro("");
     setCantonFiltro("");
@@ -283,12 +355,10 @@ export default function ListaLugares() {
     }
   }, []);
 
-  // LÓGICA DE UBICACIÓN ACTUALIZADA
   const handleLocate = useCallback((external) => {
     setSelectedExternal(external);
-    setIsMapVisible(true); // Siempre obligamos a que el mapa se abra si estaba oculto
+    setIsMapVisible(true); 
 
-    // Un pequeño retraso (150ms) para darle tiempo a React de renderizar el mapa si estaba cerrado
     setTimeout(() => {
         const mainContainer = document.querySelector('main');
         if (mainContainer) {
@@ -358,7 +428,18 @@ export default function ListaLugares() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            
+            <select 
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm bg-white"
+              value={categoriaFiltro}
+              onChange={(e) => setCategoriaFiltro(e.target.value)}
+              suppressHydrationWarning
+            >
+              <option value="">Cualquier Categoría</option>
+              {opcionesCategorias.map((c, i) => <option key={`cat-${i}-${c}`} value={c}>{c}</option>)}
+            </select>
+
             <select 
               className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm bg-white"
               value={paisFiltro}

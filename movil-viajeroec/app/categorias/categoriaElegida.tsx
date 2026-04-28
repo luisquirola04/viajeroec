@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, StatusBar, ActivityIndicator, TextInput } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image'; 
-import { listarLugaresCategoriaParroquia } from '../../services/ApiServices'; 
+import { Image } from 'expo-image';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { listarLugaresCategoriaParroquia } from '../../services/ApiServices';
 
 export default function CategoriaElegidaScreen() {
   const [lugares, setLugares] = useState([]);
@@ -57,9 +57,18 @@ export default function CategoriaElegidaScreen() {
   };
 
   const renderLugar = ({ item }) => {
-    const imagenUrl = item.Multimedia && item.Multimedia.length > 0 
-        ? item.Multimedia[0].url 
+    // 1. Capturamos la lista de multimedia cubriendo posibles variaciones del nombre del campo
+    const listaMedia = item.Multimedia || item.multimedia || item.multimedialugars || item.multimedias || [];
+    
+    // 2. Extraemos la URL original (o un placeholder si no hay fotos)
+    const imagenOriginal = listaMedia.length > 0 
+        ? listaMedia[0].url 
         : "https://via.placeholder.com/300x150.png?text=Sin+Imagen"; 
+
+    // 3. OPTIMIZACIÓN CLOUDINARY PARA LISTA: Cortamos a 400px (w_400), ajustamos calidad (q_auto) y formato (f_auto)
+    const imagenOptimizada = imagenOriginal.includes('cloudinary') 
+        ? imagenOriginal.replace('/upload/', '/upload/c_scale,w_400,q_auto,f_auto/') 
+        : imagenOriginal;
 
     return (
       <TouchableOpacity 
@@ -76,10 +85,11 @@ export default function CategoriaElegidaScreen() {
         }}
       >
         <Image 
-            source={{ uri: imagenUrl }} 
+            // 4. Usamos la imagen optimizada
+            source={{ uri: imagenOptimizada }} 
             style={styles.cardImage} 
             contentFit="cover" 
-            transition={300}
+            transition={200} // Transición suave pero rápida
             cachePolicy="memory-disk"
         />
         
@@ -166,7 +176,7 @@ export default function CategoriaElegidaScreen() {
       ) : (
         <FlatList 
           data={lugaresFiltrados}
-          keyExtractor={(item: any) => item.id.toString()}
+          keyExtractor={(item: any) => item.id ? item.id.toString() : Math.random().toString()}
           renderItem={renderLugar}
           contentContainerStyle={styles.listContainer}
           initialNumToRender={5}
