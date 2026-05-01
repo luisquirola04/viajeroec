@@ -9,6 +9,9 @@ import { listarCategoria, listarCategoriasHijas } from '@/hooks/ServiceCategoria
 import { listarParroquia } from '@/hooks/ServiceParroquia';
 import { useRouter } from 'next/navigation';
 
+// --- NUEVO IMPORT ---
+import BuscadorOSM from "@/components/BuscadorOSM";
+
 // Carga dinámica del mapa
 const MapaSelector = dynamic(() => import('@/components/MapaSelector'), {
     ssr: false,
@@ -21,7 +24,7 @@ const HORAS_DIA = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(
 export default function CrearLugarForm() {
     const [loading, setLoading] = useState(false);
     
-    // --- NUEVO ESTADO MULTIMEDIA UNIFICADO ---
+    // --- ESTADO MULTIMEDIA UNIFICADO ---
     // Guardará objetos: { type: 'link' | 'file', content: string | File, preview: string }
     const [mediaItems, setMediaItems] = useState([]); 
     const [linkInput, setLinkInput] = useState('');
@@ -142,6 +145,15 @@ export default function CrearLugarForm() {
         return url;
     };
 
+    // --- FUNCIÓN PARA RECIBIR COORDENADAS DEL BUSCADOR OSM ---
+    const handleUbicacionSeleccionada = (lat, lon) => {
+        setForm(prev => ({
+            ...prev,
+            latitud: lat,
+            longitud: lon
+        }));
+    };
+
     // --- ENVIAR FORMULARIO (AQUÍ OCURRE LA MAGIA DE CLOUDINARY) ---
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -156,10 +168,8 @@ export default function CrearLugarForm() {
             // PASO 1: Subir solo los que son archivos a Cloudinary
             for (const item of mediaItems) {
                 if (item.type === 'link') {
-                    // Si es un link de Youtube o web, lo pasamos tal cual
                     urlsFinales.push(item.content);
                 } else if (item.type === 'file') {
-                    // Si es un archivo local, lo subimos AHORA a Cloudinary
                     const formData = new FormData();
                     formData.append('file', item.content);
                     formData.append('upload_preset', UPLOAD_PRESET);
@@ -168,11 +178,8 @@ export default function CrearLugarForm() {
                     if (!res.ok) throw new Error("Fallo upload");
                     const data = await res.json();
                     
-                    let urlOptimizada = data.secure_url;
-                    if (urlOptimizada.includes('cloudinary')) {
-                        urlOptimizada = urlOptimizada.replace('/upload/', '/upload/q_auto,f_auto/');
-                    }
-                    urlsFinales.push(urlOptimizada);
+                    // ✅ AHORA GUARDAMOS LA URL PURA Y ORIGINAL
+                    urlsFinales.push(data.secure_url);
                 }
             }
 
@@ -364,6 +371,17 @@ export default function CrearLugarForm() {
                             <div className="md:col-span-2">
                                 <label className="label-text mb-2 block font-semibold text-slate-600">Ubicación en el Mapa</label>
                                 
+                                {/* BUSCADOR OSM INTEGRADO */}
+                                <div className="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-200 relative z-[400]">
+                                    <span className="text-xs text-slate-500 font-bold uppercase mb-2 block">
+                                        1. Busca una dirección o punto de interés
+                                    </span>
+                                    <BuscadorOSM onUbicacionSeleccionada={handleUbicacionSeleccionada} />
+                                </div>
+
+                                <span className="text-xs text-slate-500 font-bold uppercase mb-2 block">
+                                    2. Ajusta las coordenadas si es necesario
+                                </span>
                                 <div className="grid grid-cols-2 gap-4 mb-3">
                                     <div>
                                         <span className="text-xs text-slate-400 font-bold uppercase">Latitud</span>
@@ -385,7 +403,7 @@ export default function CrearLugarForm() {
                                     </div>
                                 </div>
 
-                                <div className="h-64 w-full rounded-xl overflow-hidden border border-slate-200 relative">
+                                <div className="h-64 w-full rounded-xl overflow-hidden border border-slate-200 relative z-0">
                                     <MapaSelector position={[parseFloat(form.latitud) || 0, parseFloat(form.longitud) || 0]} setForm={setForm} />
                                 </div>
                                 <p className="text-xs text-slate-400 mt-2">* Puedes mover el pin en el mapa, o editar los números de las cajas manualmente para mayor precisión.</p>
