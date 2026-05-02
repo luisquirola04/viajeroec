@@ -1,10 +1,8 @@
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router'; // 1. IMPORTA usePathname
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native'; 
-// 1. IMPORTA LOS ICONOS Y EL CONTEXTO
 import { Ionicons } from '@expo/vector-icons';
 import { RefreshProvider, useRefresh } from './context/RefreshContext'; 
-
 
 const BotonRefrescar = () => {
   const { triggerRefresh, loading } = useRefresh();
@@ -15,31 +13,36 @@ const BotonRefrescar = () => {
       style={styles.botonPosicion} 
       disabled={loading}
     >
-     
+     {/* Asumo que aquí va tu icono */}
     </TouchableOpacity>
   );
 };
 
 export default function RootLayout() {
+  // 2. OBTENEMOS LA RUTA ACTUAL
+  const pathname = usePathname();
+  
+  // 3. CREAMOS LA CONDICIÓN: Será true en cualquier pantalla EXCEPTO en el index ("/")
+  const mostrarBanner = pathname !== '/';
+
   return (
- 
     <RefreshProvider>
       <View style={{ flex: 1 }}>
    
-        <View style={styles.bannerContainer}>
-           
-          
-          <View style={styles.contenidoBanner}>
-              <Image 
-                  source={require('../public/banderaEc.png')} 
-                  style={styles.bandera}
-              />
-              <Text style={styles.bannerTexto}>VIAJERO EC</Text>
+        {/* 4. ENVOLVEMOS TU BANNER CON LA CONDICIÓN */}
+        {mostrarBanner && (
+          <View style={styles.bannerContainer}>
+            <View style={styles.contenidoBanner}>
+                <Image 
+                    source={require('../public/banderaEc.png')} 
+                    style={styles.bandera}
+                />
+                <Text style={styles.bannerTexto}>VIAJERO EC</Text>
+            </View>
+
+            <BotonRefrescar />
           </View>
-
-          <BotonRefrescar />
-
-        </View>
+        )}
     
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -85,7 +88,6 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 
- 
   botonPosicion: {
     position: 'absolute',
     right: 20,      

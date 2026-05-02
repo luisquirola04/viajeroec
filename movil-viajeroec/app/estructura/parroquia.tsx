@@ -89,7 +89,7 @@ export default function ParroquiasScreen() {
                   {item.info}
               </Text>
 
-              <Text style={styles.verMas}>Ver categorias &gt;</Text>
+              <Text style={styles.verMas}>Ver categorias&gt;</Text>
 
             </TouchableOpacity>
           )}

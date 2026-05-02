@@ -17,17 +17,14 @@ function normalize(size) {
   }
 }
 
-// 1. Extraemos la función fuera del componente para que no se recree en cada render
 const optimizarImagen = (url) => {
   if (!url) return null;
-  // Usamos q_auto:eco para compresión máxima sin pérdida visual grave, ideal para listas
   return url.includes('cloudinary') 
     ? url.replace('/upload/', '/upload/w_400,h_200,c_fill,q_auto:eco,f_auto/') 
     : url;
 };
 
-// 2. CREAMOS UN COMPONENTE MEMORIZADO PARA LA TARJETA (El cambio más importante)
-// React.memo evita que la tarjeta se vuelva a renderizar si sus datos no han cambiado
+// COMPONENTE DE TARJETA ACTUALIZADO
 const ProvinciaCard = React.memo(({ item, onPress }) => {
   const nombrePais = (item.Pais && item.Pais.nombre) ? item.Pais.nombre : 'Ecuador';
   const uriOptimizada = optimizarImagen(item.imagen);
@@ -50,18 +47,22 @@ const ProvinciaCard = React.memo(({ item, onPress }) => {
         source={uriOptimizada ? { uri: uriOptimizada } : null}
         style={styles.imagen}
         contentFit="cover"
-        transition={200} // Reducido de 500 a 200 para que se sienta instantáneo
+        transition={200} 
         cachePolicy="memory-disk"
-        recyclingKey={item.external} // Ayuda a reciclar la vista de la imagen en listas largas
+        recyclingKey={item.external} 
       />
       
       <Text style={styles.descripcion} maxFontSizeMultiplier={1.1}>
         {item.info}
       </Text>
+
+      
+      <View style={styles.separator} />
+      <Text style={styles.verMas}>Ver cantones de esta provincia &gt;</Text>
+
     </TouchableOpacity>
   );
 }, (prevProps, nextProps) => {
-  // Solo re-renderiza si el ID (external) cambia
   return prevProps.item.external === nextProps.item.external;
 });
 
@@ -69,7 +70,6 @@ const ProvinciaCard = React.memo(({ item, onPress }) => {
 export default function ProvinciasScreen() {
   const router = useRouter();
 
-  // 3. Usamos useCallback para que la función no cambie la referencia
   const renderCard = useCallback(({ item }) => {
     return (
       <ProvinciaCard 
@@ -92,11 +92,10 @@ export default function ProvinciasScreen() {
         funcionCarga={listarProvinciasEc}
         renderItem={renderCard}
         contentContainerStyle={{ paddingBottom: 20 }}
-        // 4. Optimizaciones nativas para FlatList (asumiendo que ListaRecargable las acepta)
-        initialNumToRender={5} // Renderiza solo 5 al inicio para que la pantalla cargue rápido
-        maxToRenderPerBatch={5} // Procesa de 5 en 5 al hacer scroll
-        windowSize={11} // Mantiene en memoria 5 pantallas arriba y 5 abajo
-        removeClippedSubviews={true} // Oculta elementos fuera de pantalla para ahorrar memoria
+        initialNumToRender={5} 
+        maxToRenderPerBatch={5} 
+        windowSize={11} 
+        removeClippedSubviews={true} 
       />
     </View>
   );
@@ -115,5 +114,21 @@ const styles = StyleSheet.create({
   badgeContainer: { backgroundColor: '#e6f0ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, marginBottom: 10 },
   paisTexto: { fontSize: normalize(14), color: '#0056b3', fontWeight: '600' },
   imagen: { width: '100%', height: 200, borderRadius: 10, marginBottom: 10, backgroundColor: '#e1e4e8' },
-  descripcion: { fontSize: normalize(14), color: '#444', textAlign: 'left', paddingHorizontal: 4, lineHeight: normalize(20), marginTop: 10, width: '100%' }
+  descripcion: { fontSize: normalize(14), color: '#444', textAlign: 'left', paddingHorizontal: 4, lineHeight: normalize(20), marginTop: 10, width: '100%', marginBottom: 15 },
+  
+  // NUEVOS ESTILOS
+  separator: {
+    height: 1,
+    backgroundColor: '#f1f3f5',
+    marginBottom: 10,
+    width: '100%', 
+  },
+  verMas: {
+    fontSize: normalize(14),
+    color: '#a58383', 
+    fontWeight: '600',
+    textAlign: 'right', 
+    width: '100%', 
+    paddingHorizontal: 4,
+  }
 });
