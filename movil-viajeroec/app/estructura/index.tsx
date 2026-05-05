@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, PixelRatio, Platform, Animated } from 'react-native';
-import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { listarProvinciasEc } from '../../services/ApiServices';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { Animated, Dimensions, PixelRatio, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ListaRecargable from '../../components/listaRecargable';
+import { listarProvinciasEc } from '../../services/ApiServices';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = SCREEN_WIDTH / 375; 

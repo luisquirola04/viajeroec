@@ -1,8 +1,7 @@
 import { Stack, usePathname } from 'expo-router'; // 1. IMPORTA usePathname
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native'; 
-import { Ionicons } from '@expo/vector-icons';
-import { RefreshProvider, useRefresh } from './context/RefreshContext'; 
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshProvider, useRefresh } from './context/RefreshContext';
 
 const BotonRefrescar = () => {
   const { triggerRefresh, loading } = useRefresh();
