@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, PixelRatio, Platform } from 'react-native';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, PixelRatio, Platform, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { listarProvinciasEc } from '../../services/ApiServices';
@@ -29,6 +29,27 @@ const ProvinciaCard = React.memo(({ item, onPress }) => {
   const nombrePais = (item.Pais && item.Pais.nombre) ? item.Pais.nombre : 'Ecuador';
   const uriOptimizada = optimizarImagen(item.imagen);
 
+  // --- CONFIGURACIÓN DE RESPIRACIÓN (SÓLO EL BOTÓN) ---
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Secuencia que hace crecer y encoger EL BOTÓN suavemente
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.04, // Crece un 4% para llamar la atención
+          duration: 1200, // Tarda 1.2 segundos en crecer
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1, // Vuelve a su tamaño normal
+          duration: 1200, // Tarda 1.2 segundos en encoger
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [scaleAnim]);
+
   return (
     <TouchableOpacity
       style={styles.card}
@@ -56,9 +77,15 @@ const ProvinciaCard = React.memo(({ item, onPress }) => {
         {item.info}
       </Text>
 
-      
-      <View style={styles.separator} />
-      <Text style={styles.verMas}>Ver cantones de esta provincia &gt;</Text>
+      {/* --- BOTÓN ANIMADO --- */}
+      <Animated.View 
+        style={[
+          styles.botonContainer, 
+          { transform: [{ scale: scaleAnim }] } // Aplicamos la animación solo aquí
+        ]}
+      >
+        <Text style={styles.textoBoton}>Explorar cantones</Text>
+      </Animated.View>
 
     </TouchableOpacity>
   );
@@ -116,19 +143,21 @@ const styles = StyleSheet.create({
   imagen: { width: '100%', height: 200, borderRadius: 10, marginBottom: 10, backgroundColor: '#e1e4e8' },
   descripcion: { fontSize: normalize(14), color: '#444', textAlign: 'left', paddingHorizontal: 4, lineHeight: normalize(20), marginTop: 10, width: '100%', marginBottom: 15 },
   
-  // NUEVOS ESTILOS
-  separator: {
-    height: 1,
-    backgroundColor: '#f1f3f5',
-    marginBottom: 10,
-    width: '100%', 
+  // ESTILOS PARA EL BOTÓN
+  botonContainer: {
+    backgroundColor: '#0056b3', 
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 5,
   },
-  verMas: {
-    fontSize: normalize(14),
-    color: '#a58383', 
-    fontWeight: '600',
-    textAlign: 'right', 
-    width: '100%', 
-    paddingHorizontal: 4,
+  textoBoton: {
+    color: '#ffffff', 
+    fontSize: normalize(16),
+    fontWeight: 'bold',
+    textAlign: 'center',
   }
 });

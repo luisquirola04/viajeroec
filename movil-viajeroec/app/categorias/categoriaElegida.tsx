@@ -2,9 +2,84 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View, Animated } from 'react-native';
 import { listarLugaresCategoriaParroquia } from '../../services/ApiServices';
 
+// --- NUEVO COMPONENTE DE TARJETA ANIMADA ---
+const LugarCard = React.memo(({ item, onPress }) => {
+  // Configuración de respiración para el botón
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.04, // Crece un 4%
+          duration: 1200, 
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1, // Vuelve a la normalidad
+          duration: 1200, 
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [scaleAnim]);
+
+  // Procesamiento de la imagen
+  const listaMedia = item.Multimedia || item.multimedia || item.multimedialugars || item.multimedias || [];
+  const imagenOriginal = listaMedia.length > 0 
+      ? listaMedia[0].url 
+      : "https://via.placeholder.com/300x150.png?text=Sin+Imagen"; 
+
+  const imagenOptimizada = imagenOriginal.includes('cloudinary') 
+      ? imagenOriginal.replace('/upload/', '/upload/c_scale,w_400,q_auto,f_auto/') 
+      : imagenOriginal;
+
+  return (
+    <TouchableOpacity 
+      style={styles.card}
+      activeOpacity={0.8}
+      onPress={onPress}
+    >
+      <Image 
+          source={{ uri: imagenOptimizada }} 
+          style={styles.cardImage} 
+          contentFit="cover" 
+          transition={200} 
+          cachePolicy="memory-disk"
+      />
+      
+      <View style={styles.cardContent}>
+          <View style={styles.rowHeader}>
+              <Text style={styles.cardTitle}>{item.nombre}</Text>
+              {item.horario ? (
+                  <View style={styles.badgeHorario}>
+                      <Ionicons name="time-outline" size={14} color="#555" />
+                  </View>
+              ) : null}
+          </View>
+          
+          <Text style={styles.cardDescription} numberOfLines={2}>
+              {item.descripcion}
+          </Text>
+
+          {/* --- BOTÓN ANIMADO --- */}
+          <Animated.View 
+            style={[
+              styles.botonContainer, 
+              { transform: [{ scale: scaleAnim }] }
+            ]}
+          >
+            <Text style={styles.textoBoton}>Ver detalles</Text>
+          </Animated.View>
+      </View>
+    </TouchableOpacity>
+  );
+});
+
+// --- COMPONENTE PRINCIPAL ---
 export default function CategoriaElegidaScreen() {
   const [lugares, setLugares] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,79 +120,21 @@ export default function CategoriaElegidaScreen() {
   // Funciones para controlar el buscador
   const abrirBuscador = () => {
     setShowSearch(true);
-    // Esperamos un instante para que el TextInput se renderice antes de hacer focus
     setTimeout(() => {
       searchInputRef.current?.focus();
     }, 100);
   };
 
   const cerrarBuscador = () => {
-    setSearchQuery(''); // Limpiamos el texto
-    setShowSearch(false); // Ocultamos la barra
-  };
-
-  const renderLugar = ({ item }) => {
-    // 1. Capturamos la lista de multimedia cubriendo posibles variaciones del nombre del campo
-    const listaMedia = item.Multimedia || item.multimedia || item.multimedialugars || item.multimedias || [];
-    
-    // 2. Extraemos la URL original (o un placeholder si no hay fotos)
-    const imagenOriginal = listaMedia.length > 0 
-        ? listaMedia[0].url 
-        : "https://via.placeholder.com/300x150.png?text=Sin+Imagen"; 
-
-    // 3. OPTIMIZACIÓN CLOUDINARY PARA LISTA: Cortamos a 400px (w_400), ajustamos calidad (q_auto) y formato (f_auto)
-    const imagenOptimizada = imagenOriginal.includes('cloudinary') 
-        ? imagenOriginal.replace('/upload/', '/upload/c_scale,w_400,q_auto,f_auto/') 
-        : imagenOriginal;
-
-    return (
-      <TouchableOpacity 
-        style={styles.card}
-        activeOpacity={0.8}
-        onPress={() => {
-            router.push({
-                pathname: "/categorias/lugar",
-                params: {
-                    externalLugar: item.external,
-                    nombreLugar: item.nombre
-                }
-            });
-        }}
-      >
-        <Image 
-            // 4. Usamos la imagen optimizada
-            source={{ uri: imagenOptimizada }} 
-            style={styles.cardImage} 
-            contentFit="cover" 
-            transition={200} // Transición suave pero rápida
-            cachePolicy="memory-disk"
-        />
-        
-        <View style={styles.cardContent}>
-            <View style={styles.rowHeader}>
-                <Text style={styles.cardTitle}>{item.nombre}</Text>
-                {item.horario ? (
-                    <View style={styles.badgeHorario}>
-                        <Ionicons name="time-outline" size={14} color="#555" />
-                    </View>
-                ) : null}
-            </View>
-            
-            <Text style={styles.cardDescription} numberOfLines={2}>
-                {item.descripcion}
-            </Text>
-
-            <Text style={styles.verMas}>Toca para ver detalles</Text>
-        </View>
-      </TouchableOpacity>
-    );
+    setSearchQuery(''); 
+    setShowSearch(false); 
   };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1565C0" />
 
-      {/* --- BANNER AZUL (Se adapta dinámicamente si el buscador está abierto) --- */}
+      {/* --- BANNER AZUL --- */}
       <View style={[styles.banner, { paddingBottom: showSearch ? 45 : 30 }]}>
         <View style={styles.headerRow}>
             <TouchableOpacity 
@@ -132,13 +149,12 @@ export default function CategoriaElegidaScreen() {
                 {params.nombreCategoria || 'Lugares'}
             </Text>
             
-            {/* Botón de lupa (Solo se muestra si el buscador está cerrado) */}
             {!showSearch ? (
               <TouchableOpacity onPress={abrirBuscador} hitSlop={{top: 15, bottom: 15, left: 15, right: 15}}>
                   <Ionicons name="search" size={24} color="#ffffff" />
               </TouchableOpacity>
             ) : (
-              <View style={{width: 24}} /> /* Espaciador para mantener el título centrado */
+              <View style={{width: 24}} /> 
             )}
         </View>
 
@@ -160,7 +176,6 @@ export default function CategoriaElegidaScreen() {
               onChangeText={setSearchQuery}
               returnKeyType="search"
             />
-            {/* Botón "X" para cerrar el buscador y limpiar */}
             <TouchableOpacity onPress={cerrarBuscador} hitSlop={{top: 15, bottom: 15, left: 15, right: 15}}>
               <Ionicons name="close-circle" size={22} color="#888" />
             </TouchableOpacity>
@@ -176,13 +191,26 @@ export default function CategoriaElegidaScreen() {
       ) : (
         <FlatList 
           data={lugaresFiltrados}
-          keyExtractor={(item: any) => item.id ? item.id.toString() : Math.random().toString()}
-          renderItem={renderLugar}
+          keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
           contentContainerStyle={styles.listContainer}
           initialNumToRender={5}
           maxToRenderPerBatch={5}
           windowSize={5}
           removeClippedSubviews={true}
+          renderItem={({ item }) => (
+            <LugarCard 
+              item={item}
+              onPress={() => {
+                router.push({
+                    pathname: "/categorias/lugar",
+                    params: {
+                        externalLugar: item.external,
+                        nombreLugar: item.nombre
+                    }
+                });
+              }}
+            />
+          )}
           ListEmptyComponent={
               <View style={styles.center}>
                   <Text style={styles.emptyText}>
@@ -252,7 +280,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white', borderRadius: 16, marginBottom: 20, elevation: 3, 
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1,
-    shadowRadius: 4, overflow: 'hidden',
+    shadowRadius: 4, overflow: 'hidden', marginTop: 5,
   },
   cardImage: { width: '100%', height: 160, backgroundColor: '#e1e4e8' },
   cardContent: { padding: 15 },
@@ -260,6 +288,23 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', flex: 1, marginRight: 10 },
   badgeHorario: { backgroundColor: '#f0f0f0', padding: 6, borderRadius: 50 },
   cardDescription: { fontSize: 14, color: '#666', lineHeight: 20, marginBottom: 12 },
-  verMas: { fontSize: 13, color: '#005bea', fontWeight: '600', textAlign: 'right' },
-  emptyText: { color: '#aaa', fontSize: 16, textAlign: 'center', lineHeight: 24 }
+  emptyText: { color: '#aaa', fontSize: 16, textAlign: 'center', lineHeight: 24 },
+
+  // --- ESTILOS PARA EL BOTÓN ANIMADO ---
+  botonContainer: {
+    backgroundColor: '#1565C0', // Usa el mismo azul que el banner superior
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  textoBoton: {
+    color: '#ffffff', 
+    fontSize: 15,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  }
 });

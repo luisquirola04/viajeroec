@@ -1,17 +1,76 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { listarCantonesProvincia } from '../../services/ApiServices'; 
 
+// --- NUEVO COMPONENTE DE TARJETA ANIMADA ---
+const CantonCard = React.memo(({ item, onPress }) => {
+  // Configuración de respiración (sólo el botón)
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.04, // Crece un 4%
+          duration: 1200, // 1.2 segundos
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1, // Vuelve a la normalidad
+          duration: 1200, // 1.2 segundos
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [scaleAnim]);
+
+  return (
+    <TouchableOpacity 
+      style={styles.card}
+      activeOpacity={0.6}
+      onPress={onPress}
+    >
+      <View style={styles.cardHeader}>
+          <Text style={styles.nombreCanton}>{item.nombre}</Text>
+          
+          <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                  {item.Provincia.nombre}, {item.Provincia.Pais.nombre}
+              </Text>
+          </View>
+      </View>
+
+      <View style={styles.separator} />
+
+      <Text style={styles.descripcion} >
+          {item.info}
+      </Text>
+
+      {/* --- BOTÓN ANIMADO --- */}
+      <Animated.View 
+        style={[
+          styles.botonContainer, 
+          { transform: [{ scale: scaleAnim }] }
+        ]}
+      >
+        <Text style={styles.textoBoton}>Explorar parroquias</Text>
+      </Animated.View>
+
+    </TouchableOpacity>
+  );
+});
+
+// --- COMPONENTE PRINCIPAL ---
 export default function CantonesScreen() {
   const [cantones, setCantones] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // <-- Nuevo estado
+  const [isLoading, setIsLoading] = useState(true); 
   const params = useLocalSearchParams(); 
   const router = useRouter();
 
   useEffect(() => {
     const cargarCantones = async () => {
-      setIsLoading(true); // Iniciamos carga
+      setIsLoading(true); 
       try {
         if (params.external) {
           const data = await listarCantonesProvincia(params.external);
@@ -22,7 +81,7 @@ export default function CantonesScreen() {
       } catch (error) {
         console.error("Error al cargar cantones:", error);
       } finally {
-        setIsLoading(false); // Detenemos carga pase lo que pase
+        setIsLoading(false); 
       }
     };
     cargarCantones();
@@ -35,7 +94,6 @@ export default function CantonesScreen() {
         {params.nombreProvincia ? `Cantones de ${params.nombreProvincia}` : 'Seleccione un Cantón'}
       </Text>
 
-      {/* Condicional para mostrar el cargando o la lista */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007bff" />
@@ -44,41 +102,21 @@ export default function CantonesScreen() {
       ) : (
         <FlatList
           data={cantones}
-          keyExtractor={(item: any) => item.id.toString()}
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingBottom: 20 }}
           renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={styles.card}
-              activeOpacity={0.6}
+            <CantonCard 
+              item={item} 
               onPress={() => {
-                  router.push({ 
-                    pathname: "/estructura/parroquia", 
-                    params: { 
-                      external: item.external, 
-                      nombreCanton: item.nombre 
-                    } 
-                  });
+                router.push({ 
+                  pathname: "/estructura/parroquia", 
+                  params: { 
+                    external: item.external, 
+                    nombreCanton: item.nombre 
+                  } 
+                });
               }}
-            >
-              <View style={styles.cardHeader}>
-                  <Text style={styles.nombreCanton}>{item.nombre}</Text>
-                  
-                  <View style={styles.badge}>
-                      <Text style={styles.badgeText}>
-                          {item.Provincia.nombre}, {item.Provincia.Pais.nombre}
-                      </Text>
-                  </View>
-              </View>
-
-              <View style={styles.separator} />
-
-              <Text style={styles.descripcion} >
-                  {item.info}
-              </Text>
-
-              <Text style={styles.verMas}>Ver parroquias de este cantón &gt;</Text>
-
-            </TouchableOpacity>
+            />
           )}
           ListEmptyComponent={
             <Text style={styles.emptyText}>No se encontraron cantones registrados.</Text>
@@ -165,15 +203,27 @@ const styles = StyleSheet.create({
     lineHeight: 20, 
     marginBottom: 15,
   },
-  verMas: {
-    fontSize: 14,
-    color: '#007bff',
-    fontWeight: '600',
-    textAlign: 'right', 
-  },
   emptyText: {
     marginTop: 50,
     color: '#adb5bd',
     fontSize: 16,
+  },
+  
+  // NUEVOS ESTILOS PARA EL BOTÓN ANIMADO
+  botonContainer: {
+    backgroundColor: '#007bff', // Usando el mismo azul que tienes en el borde de la tarjeta
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  textoBoton: {
+    color: '#ffffff', 
+    fontSize: 15,
+    fontWeight: 'bold',
+    textAlign: 'center',
   }
 });

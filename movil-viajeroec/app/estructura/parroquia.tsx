@@ -1,11 +1,80 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { listarParroquiasCanton } from '../../services/ApiServices'; 
 
+// --- NUEVO COMPONENTE DE TARJETA ANIMADA ---
+const ParroquiaCard = React.memo(({ item, onPress }) => {
+  // Configuración de respiración para el botón
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.04, // Crece un 4%
+          duration: 1200, 
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1, // Vuelve a la normalidad
+          duration: 1200, 
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [scaleAnim]);
+
+  return (
+    <TouchableOpacity 
+      style={styles.card}
+      activeOpacity={0.7}
+      onPress={onPress}
+    >
+      <View style={styles.cardHeader}>
+          <Text style={styles.nombreParroquia}>{item.nombre}</Text>
+          
+          {/* Badge para el TIPO DE PARROQUIA (Urbana/Rural) */}
+          <View style={[
+              styles.badgeTipo, 
+              item.tipoParroquia === 'URBANA' ? styles.badgeUrbana : styles.badgeRural
+          ]}>
+              <Text style={styles.badgeTextTipo}>{item.tipoParroquia}</Text>
+          </View>
+      </View>
+
+      {/* Ubicación Jerárquica */}
+      <View style={styles.ubicacionContainer}>
+          <Text style={styles.ubicacionLabel}>Ubicación:</Text>
+          <Text style={styles.ubicacionTexto}>
+            {item.Canton.nombre}, {item.Canton.Provincia.nombre}
+          </Text>
+      </View>
+
+      <View style={styles.separator} />
+
+      <Text style={styles.descripcion}>
+          {item.info}
+      </Text>
+
+      {/* --- BOTÓN ANIMADO --- */}
+      <Animated.View 
+        style={[
+          styles.botonContainer, 
+          { transform: [{ scale: scaleAnim }] }
+        ]}
+      >
+        <Text style={styles.textoBoton}>Ver categorías</Text>
+      </Animated.View>
+
+    </TouchableOpacity>
+  );
+});
+
+// --- COMPONENTE PRINCIPAL ---
 export default function ParroquiasScreen() {
   const [parroquias, setParroquias] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // <-- Nuevo estado
+  const [isLoading, setIsLoading] = useState(true);
   const params = useLocalSearchParams(); 
   const router = useRouter();
 
@@ -47,12 +116,11 @@ export default function ParroquiasScreen() {
       ) : (
         <FlatList
           data={parroquias}
-          keyExtractor={(item: any) => item.id.toString()}
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingBottom: 20 }}
           renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={styles.card}
-              activeOpacity={0.7}
+            <ParroquiaCard 
+              item={item}
               onPress={() => {
                   router.push({
                       pathname: "/categorias", 
@@ -62,36 +130,7 @@ export default function ParroquiasScreen() {
                       }
                   });
               }}
-            >
-              <View style={styles.cardHeader}>
-                  <Text style={styles.nombreParroquia}>{item.nombre}</Text>
-                  
-                  {/* Badge para el TIPO DE PARROQUIA (Urbana/Rural) */}
-                  <View style={[
-                      styles.badgeTipo, 
-                      item.tipoParroquia === 'URBANA' ? styles.badgeUrbana : styles.badgeRural
-                  ]}>
-                      <Text style={styles.badgeTextTipo}>{item.tipoParroquia}</Text>
-                  </View>
-              </View>
-
-              {/* Ubicación Jerárquica */}
-              <View style={styles.ubicacionContainer}>
-                  <Text style={styles.ubicacionLabel}>Ubicación:</Text>
-                  <Text style={styles.ubicacionTexto}>
-                    {item.Canton.nombre}, {item.Canton.Provincia.nombre}
-                  </Text>
-              </View>
-
-              <View style={styles.separator} />
-
-              <Text style={styles.descripcion}>
-                  {item.info}
-              </Text>
-
-              <Text style={styles.verMas}>Ver categorias&gt;</Text>
-
-            </TouchableOpacity>
+            />
           )}
           ListEmptyComponent={
             <Text style={styles.emptyText}>No hay parroquias registradas.</Text>
@@ -196,15 +235,27 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 10,
   },
-  verMas: {
-    fontSize: 13,
-    color: '#28a745', 
-    fontWeight: '600',
-    textAlign: 'right',
-  },
   emptyText: {
     marginTop: 50,
     color: '#adb5bd',
     fontSize: 16,
+  },
+  
+  // ESTILOS PARA EL BOTÓN ANIMADO
+  botonContainer: {
+    backgroundColor: '#28a745', // Color verde que ya usas en la tarjeta
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  textoBoton: {
+    color: '#ffffff', 
+    fontSize: 15,
+    fontWeight: 'bold',
+    textAlign: 'center',
   }
 });

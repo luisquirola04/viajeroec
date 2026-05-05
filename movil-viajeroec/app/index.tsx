@@ -1,18 +1,24 @@
 import { useState } from 'react';
 import { Redirect } from 'expo-router';
-// Asegúrate de poner la ruta correcta hacia donde guardaste el componente
 import TutorialScreen from './TutorialScreen'; 
+import CollageScreen from './CollageScreen'; // Importamos el nuevo componente
 
 export default function Index() {
-  // Estado para saber si debemos redirigir a la app principal
-  const [isReadyToRedirect, setIsReadyToRedirect] = useState(false);
+  // Manejamos el flujo de la aplicación con un string de estado
+  // 'tutorial' -> 'collage' -> 'ready'
+  const [appState, setAppState] = useState('tutorial');
 
-  // Si el tutorial terminó (o si el usuario ya lo había visto antes), redirigimos
-  if (isReadyToRedirect) {
+  // 3. Si el estado es ready, redirigimos a la app principal
+  if (appState === 'ready') {
     return <Redirect href="/estructura" />;
   }
 
-  // Mientras tanto, mostramos el tutorial. 
-  // Cuando el TutorialScreen ejecute "onFinish()", cambiará este estado a true.
-  return <TutorialScreen onFinish={() => setIsReadyToRedirect(true)} />;
+  // 2. Si el tutorial terminó, mostramos el Collage
+  if (appState === 'collage') {
+    return <CollageScreen onContinue={() => setAppState('ready')} />;
+  }
+
+  // 1. Por defecto, mostramos el tutorial. 
+  // Cuando termine, pasamos al estado 'collage'.
+  return <TutorialScreen onFinish={() => setAppState('collage')} />;
 }
