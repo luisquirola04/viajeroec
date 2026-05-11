@@ -1,7 +1,9 @@
-import { Stack, usePathname } from 'expo-router'; // 1. IMPORTA usePathname
+import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { RefreshProvider, useRefresh } from './context/RefreshContext';
+// 1. IMPORTA EL HOOK DE RED
+import { useNetInfo } from '@react-native-community/netinfo';
 
 const BotonRefrescar = () => {
   const { triggerRefresh, loading } = useRefresh();
@@ -12,23 +14,21 @@ const BotonRefrescar = () => {
       style={styles.botonPosicion} 
       disabled={loading}
     >
-     {/* Asumo que aquí va tu icono */}
     </TouchableOpacity>
   );
 };
 
 export default function RootLayout() {
-  // 2. OBTENEMOS LA RUTA ACTUAL
   const pathname = usePathname();
-  
-  // 3. CREAMOS LA CONDICIÓN: Será true en cualquier pantalla EXCEPTO en el index ("/")
   const mostrarBanner = pathname !== '/';
+  
+  // 2. INICIALIZA EL ESTADO DE LA RED
+  const netInfo = useNetInfo();
 
   return (
     <RefreshProvider>
       <View style={{ flex: 1 }}>
    
-        {/* 4. ENVOLVEMOS TU BANNER CON LA CONDICIÓN */}
         {mostrarBanner && (
           <View style={styles.bannerContainer}>
             <View style={styles.contenidoBanner}>
@@ -40,6 +40,16 @@ export default function RootLayout() {
             </View>
 
             <BotonRefrescar />
+          </View>
+        )}
+
+        {/* 3. ALERTA GLOBAL DE SIN CONEXIÓN */}
+        {/* Se inserta en el flujo normal, así empuja el Stack hacia abajo sin tapar nada */}
+        {netInfo.isConnected === false && (
+          <View style={styles.alertaOffline}>
+            <Text style={styles.textoOffline}>
+               No tienes conexión a internet. Revisa tus datos o Wi-Fi.
+            </Text>
           </View>
         )}
     
@@ -58,6 +68,7 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
+  
   bannerContainer: {
     height: 100, 
     backgroundColor: '#005bea', 
@@ -67,30 +78,40 @@ const styles = StyleSheet.create({
     zIndex: 10, 
     position: 'relative', 
   },
-  
   contenidoBanner: {
     flexDirection: 'row',       
     alignItems: 'center',      
     gap: 12,                    
   },
-
   bannerTexto: {
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
     letterSpacing: 3, 
   },
-  
   bandera: {
     width: 32,
     height: 22, 
     resizeMode: 'contain',
   },
-
   botonPosicion: {
     position: 'absolute',
     right: 20,      
     bottom: 15,    
     zIndex: 20,
+  },
+
+  // 4. ESTILOS PARA LA ALERTA DE RED
+  alertaOffline: {
+    backgroundColor: '#ff4d4f', 
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5, 
+  },
+  textoOffline: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: 'bold',
   }
 });
