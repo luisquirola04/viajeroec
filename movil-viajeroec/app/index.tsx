@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Redirect } from 'expo-router';
 import TutorialScreen from './TutorialScreen'; 
-import CollageScreen from './CollageScreen'; // Importamos el nuevo componente
-
+import CollageScreen from './CollageScreen'; 
 export default function Index() {
   // Manejamos el flujo de la aplicación con un string de estado
   // 'tutorial' -> 'collage' -> 'ready'

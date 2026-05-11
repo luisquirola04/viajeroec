@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   
   // ESTILOS PARA EL BOTÓN ANIMADO
   botonContainer: {
-    backgroundColor: '#28a745', // Color verde que ya usas en la tarjeta
+    backgroundColor: '#28a745', 
     width: '100%',
     paddingVertical: 12,
     borderRadius: 8,

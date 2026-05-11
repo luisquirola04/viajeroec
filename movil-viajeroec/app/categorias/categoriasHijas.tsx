@@ -129,4 +129,4 @@ const styles = StyleSheet.create({
   loaderText: { marginTop: 15, color: '#555', fontSize: 16, fontWeight: '500' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 },
   emptyText: { textAlign: 'center', marginTop: 15, color: '#888', fontSize: 16, paddingHorizontal: 30 }
-});
+}); 
