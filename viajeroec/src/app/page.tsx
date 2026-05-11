@@ -126,7 +126,7 @@ console.log(res)
                                 name="correo"
                                 required 
                                 className="pl-10 w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-100 outline-none transition-all"
-                                placeholder="admin@viajeroec.com"
+                                placeholder="correo@dominio.com"
                                 value={form.correo}
                                 onChange={handleChange}
                             />

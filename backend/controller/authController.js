@@ -128,12 +128,12 @@ async registrarAdmin(req, res) {
         });
 
         // 5. Respuesta
-        return res.status(201).json({
+        return res.status(200).json({
             msg: "Administrador creado correctamente",
             external_cuenta: nuevaCuenta.external,
             correo: nuevaCuenta.correo,
             isAdmin: nuevaCuenta.isAdmin,
-            code: 201
+            code: 200
         });
 
     } catch (error) {
@@ -154,6 +154,28 @@ async registrarAdmin(req, res) {
         });
     }
 }
+
+async getAdmins(req, res) {
+    try {
+        const admins = await Cuenta.findAll({
+            where: { isAdmin: true },
+            attributes: ['external', 'nombre', 'apellido', 'correo', 'estado']
+        });
+
+        return res.status(200).json({
+            admins,
+            code: 200
+        });
+    } catch (error) {
+        console.error("Error al obtener admins:", error);
+        return res.status(500).json({
+            msg: "Error interno del servidor",
+            error: error.message,
+            code: 500
+        });
+    }
+}
+
 }
 
 module.exports = new AuthController();

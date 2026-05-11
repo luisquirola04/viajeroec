@@ -35,4 +35,5 @@ router.get('/validar', auth, (req, res) => {
     });
 });
 
+router.get('/getAdmins',auth, loginController.getAdmins);
 module.exports = router;

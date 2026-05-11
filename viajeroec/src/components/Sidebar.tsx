@@ -8,9 +8,9 @@ import {
   PlusCircle,
   List,
   LogOut,
+  Users 
 } from "lucide-react";
 import { validarToken } from "@/hooks/ServiceAuth"; 
-
 
 const menuItems = [
   {
@@ -45,7 +45,7 @@ const menuItems = [
       { name: "Ver Parroquias", href: "/admin/parroquia/lista", icon: List },
     ],
   },
-    {
+  {
     title: "Categorias",
     icon: Globe,
     children: [
@@ -53,7 +53,7 @@ const menuItems = [
       { name: "Ver Categorías", href: "/admin/categoria/lista", icon: List },
     ],
   },
-    {
+  {
     title: "Lugares",
     icon: Globe,
     children: [
@@ -68,36 +68,43 @@ export default function Sidebar() {
   const router = useRouter();
 
   const [userName, setUserName] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>("");
   const [initials, setInitials] = useState("");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [isValidating, setIsValidating] = useState(true); 
-
 
   const handleLogout = () => {
     sessionStorage.clear();
     router.push("/");
   };
 
-
   useEffect(() => {
     const checkSession = async () => {
-  
       const name = sessionStorage.getItem("user");
       const token = sessionStorage.getItem("token"); 
+      const role = sessionStorage.getItem("role"); 
 
-      console.log(name, token)
+      console.log(role);
+      
       if (!name || !token) {
         handleLogout();
         return;
       }
 
+      // Asignar el rol amigable
+      if (role === "ADMIN") {
+        setUserRole("Administrador");
+      } else if (role === "USER") {
+        setUserRole("Usuario");
+      } else {
+        setUserRole(role || "Usuario");
+      }
+
       // 3. Validar token contra el backend
       try {
         const respuesta = await validarToken(token);
-        console.log(respuesta)
-        // Asumiendo que tu backend devuelve code: 200 si es exitoso
+        
         if (respuesta && respuesta.code === 200) {
-            // Token Válido: Seteamos estados
             setUserName(name);
             setInitials(
                 name
@@ -108,7 +115,6 @@ export default function Sidebar() {
                 .slice(0, 2)
             );
         } else {
-            
             console.warn("Sesión inválida detectada por el servidor");
             handleLogout();
         }
@@ -127,7 +133,6 @@ export default function Sidebar() {
     setOpenMenu(openMenu === title ? null : title);
   };
 
-  // Mientras valida o si no hay usuario, no renderizamos el sidebar (o podrías poner un skeleton)
   if (isValidating || !userName) return null;
 
   return (
@@ -143,6 +148,23 @@ export default function Sidebar() {
           NAV
       ========================= */}
       <nav className="flex-1 py-6 px-3 space-y-2 overflow-y-auto">
+        
+        {/* Botón de Administradores con el mismo estilo del menú principal */}
+        <Link
+          href="/admin/admin/lista"
+          className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm font-semibold transition-colors ${
+            pathname.startsWith("/admin/admin")
+              ? "bg-primary/10 text-primary" // Estilo si está activo
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          <Users size={20} />
+          Administradores
+        </Link>
+
+        {/* Separador opcional para dividir del resto del menú */}
+        <div className="h-px bg-border my-2 mx-2"></div>
+
         {menuItems.map((section) => {
           const SectionIcon = section.icon;
           const isOpen = openMenu === section.title;
@@ -201,14 +223,21 @@ export default function Sidebar() {
       ========================= */}
       <div className="p-4 border-t border-border bg-muted/20">
         <div className="flex flex-col gap-4">
-          {/* Usuario */}
+          
+          {/* Usuario y Rol */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+            <div className="w-9 h-9 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
               {initials}
             </div>
-            <span className="text-sm font-medium truncate">
-              {userName}
-            </span>
+            
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-sm font-medium truncate">
+                {userName}
+              </span>
+              <span className="text-xs text-muted-foreground truncate uppercase font-semibold tracking-wider">
+                {userRole}
+              </span>
+            </div>
           </div>
 
           {/* Logout */}
@@ -220,6 +249,7 @@ export default function Sidebar() {
             Cerrar Sesión
           </button>
         </div>
+        
       </div>
     </aside>
   );
