@@ -59,7 +59,7 @@ class CategoriaController {
      POST - Crear categoría
   ========================= */
   async crearCategoria(req, res) {
-    const { nombre } = req.body;
+    const { nombre, icono, color  } = req.body;
 
     if (!nombre) {
       return res.status(400).json({
@@ -72,6 +72,8 @@ class CategoriaController {
       await Categoria.create({
         nombre,
         estado: true,
+        icono,
+        color
       });
 
       return res.status(200).json({
@@ -89,7 +91,7 @@ class CategoriaController {
 
 
   async crearCategoriaHija(req, res) {
-    const { nombre, externalPadre } = req.body;
+    const { nombre, externalPadre, icono, color } = req.body;
 
     if (!nombre || !externalPadre) {
       return res.status(400).json({
@@ -108,6 +110,8 @@ class CategoriaController {
       await Categoria.create({
         nombre,
         estado: true,
+        icono,
+        color,
         padreId: padre.id
 
       });
@@ -125,7 +129,7 @@ class CategoriaController {
   }
 
   async editarCategoria(req, res) {
-    const { nombre, estado, externalCategoria } = req.body;
+    const { nombre, estado, icono, color, externalCategoria } = req.body;
     if (!externalCategoria) {
       return res.status(400).json({
         msj: "Datos insuficientes",
@@ -141,7 +145,7 @@ class CategoriaController {
     }
     try {
       await categoria.update({
-        nombre, estado
+        nombre, estado, icono, color
       })
       return res.status(200).json({
         msj: "Categoría guardada correctamente",

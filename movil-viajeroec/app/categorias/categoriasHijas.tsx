@@ -4,27 +4,16 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { obtenerCategoriasHijas } from '../../services/ApiServices';
 
-// --- LÓGICA DE ICONOS (Reutilizada) ---
-const getAtributosCategoria = (nombre: string) => {
-  const nombreLower = nombre.toLowerCase();
-  if (nombreLower.includes('comer') || nombreLower.includes('tradicional') || nombreLower.includes('plato')) return { icon: 'restaurant', color: '#FF5252' }; 
-  if (nombreLower.includes('dormir') || nombreLower.includes('hotel')) return { icon: 'bed', color: '#00E676' }; 
-  if (nombreLower.includes('evento')) return { icon: 'calendar', color: '#FFD600' }; 
-  if (nombreLower.includes('visitar') || nombreLower.includes('turismo')) return { icon: 'camera', color: '#00B0FF' }; 
-  if (nombreLower.includes('hacer') || nombreLower.includes('deporte')) return { icon: 'bicycle', color: '#FF6D00' }; 
-  return { icon: 'grid', color: '#78909C' }; 
-};
-
 export default function CategoriasHijasScreen() {
   const [subcategorias, setSubcategorias] = useState([]);
-  const [cargando, setCargando] = useState(true); // <-- 1. NUEVO ESTADO DE CARGA
+  const [cargando, setCargando] = useState(true); 
   
   const params = useLocalSearchParams();
   const router = useRouter();
 
   useEffect(() => {
     const cargarSubcategorias = async () => {
-      setCargando(true); // Aseguramos que inicie en cargando
+      setCargando(true); 
       try {
         if (params.externalPadre) {
           const data = await obtenerCategoriasHijas(params.externalPadre);
@@ -35,7 +24,7 @@ export default function CategoriasHijasScreen() {
       } catch (error) {
           console.error("Error cargando subcategorías:", error);
       } finally {
-          setCargando(false); // <-- 2. Apagamos el loader independientemente de si hay datos o error
+          setCargando(false); 
       }
     };
     
@@ -43,7 +32,10 @@ export default function CategoriasHijasScreen() {
   }, [params.externalPadre]);
 
   const renderItem = ({ item }) => {
-    const { icon, color } = getAtributosCategoria(item.nombre);
+    // AQUÍ TAMBIÉN CONSUMIMOS DIRECTAMENTE DE LA BD
+    const iconName = item.icono || 'grid';
+    const hexColor = item.color || '#78909C';
+
     return (
       <TouchableOpacity 
         style={styles.card}
@@ -59,8 +51,8 @@ export default function CategoriasHijasScreen() {
           });
         }}
       >
-        <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
-           <Ionicons name={icon as any} size={32} color={color} />
+        <View style={[styles.iconContainer, { backgroundColor: hexColor + '15' }]}>
+           <Ionicons name={iconName as any} size={32} color={hexColor} />
         </View>
         <Text style={styles.cardText}>{item.nombre}</Text>
       </TouchableOpacity>
@@ -87,7 +79,6 @@ export default function CategoriasHijasScreen() {
         </Text>
       </View>
 
-      {/* 3. LÓGICA CONDICIONAL: Mostramos el loader O la lista */}
       {cargando ? (
         <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#1565C0" />
@@ -113,7 +104,6 @@ export default function CategoriasHijasScreen() {
   );
 }
 
-// ESTILOS
 const { width } = Dimensions.get('window');
 const cardSize = (width - 50) / 2;
 
@@ -135,8 +125,6 @@ const styles = StyleSheet.create({
   },
   iconContainer: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
   cardText: { fontSize: 14, fontWeight: '600', color: '#455A64', textAlign: 'center' },
-  
-  // Nuevos estilos para el loader y el empty state
   loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
   loaderText: { marginTop: 15, color: '#555', fontSize: 16, fontWeight: '500' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 },

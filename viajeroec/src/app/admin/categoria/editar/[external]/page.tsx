@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useRouter, useParams } from "next/navigation";
-// Asumo que tienes una función getCategoria en tu ServiceCategoria
 import { getCategoria, editarCategoria } from "@/hooks/ServiceCategoria"; 
 import Swal from "sweetalert2";
 import Link from "next/link";
@@ -15,7 +14,9 @@ export default function EditarCategoria() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     nombre: "",
-    externalCategoria: external // Nombre de clave asumiendo tu convención habitual
+    icono: "grid",
+    color: "#78909C",
+    externalCategoria: external 
   });
 
   useEffect(() => {
@@ -30,7 +31,6 @@ export default function EditarCategoria() {
     }
 
     try {
-      // Necesitarás tener este GET en tu ServiceCategoria
       const respuesta = await getCategoria(token, external);
       
       let c = null;
@@ -45,6 +45,8 @@ export default function EditarCategoria() {
       if (c) {
         setFormData({
             nombre: c.nombre || "",
+            icono: c.icono || "grid",
+            color: c.color || "#78909C",
             externalCategoria: external as string
         });
       } else {
@@ -63,6 +65,10 @@ export default function EditarCategoria() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, icono: e.target.value.toLowerCase() });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = sessionStorage.getItem("token");
@@ -74,6 +80,8 @@ export default function EditarCategoria() {
 
     const payload = {
         nombre: formData.nombre,
+        icono: formData.icono,
+        color: formData.color,
         externalCategoria: external as string 
     };
 
@@ -101,7 +109,7 @@ export default function EditarCategoria() {
 
       <main className="flex-1 p-6 md:p-10 overflow-y-auto h-screen flex justify-center">
         <div className="w-full max-w-xl">
-            <Link href="/admin/categoria" className="text-teal-600 hover:text-teal-800 flex items-center gap-2 mb-6 font-medium">
+            <Link href="/admin/categoria/lista" className="text-teal-600 hover:text-teal-800 flex items-center gap-2 mb-6 font-medium">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 Volver a la lista
             </Link>
@@ -127,6 +135,65 @@ export default function EditarCategoria() {
                                 className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all" 
                                 placeholder="Ej: Playas, Museos, Montañas..."
                             />
+                        </div>
+
+                        <div className="flex gap-4">
+                            <div className="flex-1">
+                                <div className="flex justify-between items-center mb-2">
+                                <label className="block text-sm font-medium text-slate-700">Ícono</label>
+                                <a 
+                                    href="https://icons.expo.fyi/" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-teal-600 hover:text-teal-800 underline font-medium transition-colors"
+                                >
+                                    Explorar galería
+                                </a>
+                                </div>
+                                <input
+                                type="text"
+                                list="iconos-sugeridos-editar"
+                                required
+                                name="icono"
+                                placeholder="Ej: grid, map, compass..."
+                                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:bg-white outline-none transition-colors"
+                                value={formData.icono}
+                                onChange={handleIconChange}
+                                />
+                                <datalist id="iconos-sugeridos-editar">
+                                <option value="grid">General</option>
+                                <option value="restaurant">Gastronomía</option>
+                                <option value="bed">Alojamiento</option>
+                                <option value="calendar">Eventos</option>
+                                <option value="camera">Turismo</option>
+                                <option value="bicycle">Actividades</option>
+                                <option value="map">Mapas</option>
+                                <option value="compass">Aventura</option>
+                                </datalist>
+                            </div>
+
+                            {/* CAMBIO AQUÍ: Input de texto para pegar el Hexadecimal */}
+                            <div className="w-1/3">
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Color (Hex)</label>
+                                <div className="flex items-center gap-2">
+                                <input
+                                    type="color"
+                                    name="color"
+                                    className="h-12 w-12 rounded cursor-pointer border-0 p-0 bg-transparent shrink-0"
+                                    value={formData.color}
+                                    onChange={handleChange}
+                                />
+                                <input
+                                    type="text"
+                                    name="color"
+                                    maxLength={7}
+                                    placeholder="#000000"
+                                    className="w-full px-3 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:bg-white outline-none transition-colors font-mono text-sm uppercase"
+                                    value={formData.color}
+                                    onChange={handleChange}
+                                />
+                                </div>
+                            </div>
                         </div>
 
                         <button 

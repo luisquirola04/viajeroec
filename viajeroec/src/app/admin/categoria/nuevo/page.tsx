@@ -13,26 +13,23 @@ import { useRouter } from 'next/navigation';
 export default function CrearCategoriaForm() {
   const [loading, setLoading] = useState(false);
   const [nombre, setNombre] = useState("");
-  const [padreSeleccionado, setPadreSeleccionado] = useState(""); // Aquí guardaremos el 'external'
-  const [listaCategorias, setListaCategorias] = useState([]); // Array de categorías
+  const [padreSeleccionado, setPadreSeleccionado] = useState(""); 
+  const [listaCategorias, setListaCategorias] = useState([]); 
   
+  const [icono, setIcono] = useState("grid");
+  const [color, setColor] = useState("#78909C");
+
   const token = typeof window !== 'undefined' ? sessionStorage.getItem("token") : null;
   const router = useRouter();
 
-  // 1. Cargar las categorías existentes
   useEffect(() => {
     const cargarCategorias = async () => {
       if (token) {
         try {
           const respuesta = await listarCategoria(token);
-          // console.log("Respuesta categorias:", respuesta); // Debug
-
-          // AJUSTE AQUÍ: La respuesta tiene la forma { code: 200, categorias: [...] }
-          // Dependiendo de cómo retorne tu servicio, accedemos a .categorias
           if (respuesta && respuesta.categorias) {
             setListaCategorias(respuesta.categorias);
           } else if (Array.isArray(respuesta)) {
-             // Por si acaso el servicio devolviera el array directo
             setListaCategorias(respuesta);
           }
         } catch (error) {
@@ -49,25 +46,28 @@ export default function CrearCategoriaForm() {
       return Swal.fire("Error", "Escribe un nombre", "warning");
 
     try {
+      setLoading(true);
       Swal.fire({ title: "Guardando...", didOpen: () => Swal.showLoading() });
       
       let res;
 
-      // 2. Lógica para decidir si es Padre o Hija
       if (padreSeleccionado && padreSeleccionado !== "") {
-        // ES HIJA: enviamos el external del padre seleccionado
         const data = { 
             nombre, 
+            icono,
+            color,
             externalPadre: padreSeleccionado 
         };
         res = await registroCategoriaHija(token, data);
       } else {
-        // ES PADRE: solo enviamos nombre
-        const data = { nombre };
+        const data = { 
+            nombre,
+            icono,
+            color
+        };
         res = await registroCategoria(token, data);
       }
 
-      // Validamos respuesta (Tu back devuelve code: 200 en el body)
       if (res && res.code === 200) {
         Swal.fire({
           icon: "success",
@@ -77,6 +77,8 @@ export default function CrearCategoriaForm() {
         });
         setNombre("");
         setPadreSeleccionado(""); 
+        setIcono("grid");
+        setColor("#78909C");
         router.push('/admin/categoria/lista');
 
       } else {
@@ -85,6 +87,8 @@ export default function CrearCategoriaForm() {
     } catch (error) {
       console.error(error);
       Swal.fire("Error", "Fallo de conexión", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,7 +102,6 @@ export default function CrearCategoriaForm() {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Input Nombre */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Nombre de Categoría
@@ -113,7 +116,66 @@ export default function CrearCategoriaForm() {
               />
             </div>
 
-            {/* Select Padre */}
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Ícono
+                  </label>
+                  <a 
+                    href="https://icons.expo.fyi/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-teal-600 hover:text-teal-800 underline font-medium transition-colors"
+                  >
+                    Explorar galería
+                  </a>
+                </div>
+                <input
+                  type="text"
+                  list="iconos-sugeridos"
+                  required
+                  placeholder="Ej: grid, map, compass..."
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:bg-white outline-none transition-colors"
+                  value={icono}
+                  onChange={(e) => setIcono(e.target.value.toLowerCase())}
+                />
+                <datalist id="iconos-sugeridos">
+                  <option value="grid">General</option>
+                  <option value="restaurant">Gastronomía</option>
+                  <option value="bed">Alojamiento</option>
+                  <option value="calendar">Eventos</option>
+                  <option value="camera">Turismo</option>
+                  <option value="bicycle">Actividades</option>
+                  <option value="map">Mapas</option>
+                  <option value="compass">Aventura</option>
+                </datalist>
+              </div>
+
+              {/* CAMBIO AQUÍ: Input de texto para pegar el Hexadecimal */}
+              <div className="w-1/3">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Color (Hex)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    className="h-12 w-12 rounded cursor-pointer border-0 p-0 bg-transparent shrink-0"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    maxLength={7}
+                    placeholder="#000000"
+                    className="w-full px-3 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:bg-white outline-none transition-colors font-mono text-sm uppercase"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Categoría Padre (Opcional)
@@ -123,10 +185,7 @@ export default function CrearCategoriaForm() {
                 value={padreSeleccionado}
                 onChange={(e) => setPadreSeleccionado(e.target.value)}
               >
-                {/* Opción por defecto para crear una raíz */}
                 <option value="">Ninguna (Es categoría principal)</option>
-                
-                {/* Mapeo basado en tu JSON: usamos 'external' como value */}
                 {listaCategorias.map((cat) => (
                   <option key={cat.id} value={cat.external}>
                     {cat.nombre}

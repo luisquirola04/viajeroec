@@ -4,27 +4,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { listarCategorias, obtenerCategoriasHijas } from '../../services/ApiServices'; 
 
-// --- LÓGICA DE ICONOS ---
-const getAtributosCategoria = (nombre: string) => {
-  const nombreLower = nombre.toLowerCase();
-  if (nombreLower.includes('comer') || nombreLower.includes('gastronomia')) return { icon: 'restaurant', color: '#FF5252' }; 
-  if (nombreLower.includes('dormir') || nombreLower.includes('alojamiento')) return { icon: 'bed', color: '#00E676' }; 
-  if (nombreLower.includes('evento') || nombreLower.includes('agenda')) return { icon: 'calendar', color: '#FFD600' }; 
-  if (nombreLower.includes('visitar') || nombreLower.includes('turismo')) return { icon: 'camera', color: '#00B0FF' }; 
-  if (nombreLower.includes('hacer') || nombreLower.includes('actividad')) return { icon: 'bicycle', color: '#FF6D00' }; 
-  return { icon: 'grid', color: '#78909C' }; 
-};
-
 export default function CategoriasScreen() {
   const [categorias, setCategorias] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // <-- Nuevo estado de carga inicial
-  const [loadingCheck, setLoadingCheck] = useState(false); // Estado para mostrar carga al verificar hijas
+  const [isLoading, setIsLoading] = useState(true); 
+  const [loadingCheck, setLoadingCheck] = useState(false); 
   const params = useLocalSearchParams();
   const router = useRouter();
 
   useEffect(() => {
     const cargarCategorias = async () => {
-      setIsLoading(true); // Iniciamos carga inicial
+      setIsLoading(true); 
       try {
         const data = await listarCategorias();
         if (data && data.categorias) {
@@ -33,34 +22,29 @@ export default function CategoriasScreen() {
       } catch (error) {
         console.error("Error al cargar categorías:", error);
       } finally {
-        setIsLoading(false); // Detenemos carga inicial
+        setIsLoading(false); 
       }
     };
     cargarCategorias();
   }, []);
 
-  // Función inteligente de navegación
   const manejarNavegacion = async (item) => {
-    setLoadingCheck(true); // Mostramos spinner si la consulta tarda
+    setLoadingCheck(true); 
     try {
-        // Consultamos si tiene hijas
         const dataHijas = await obtenerCategoriasHijas(item.external);
         
         setLoadingCheck(false);
 
-        // Verificamos si el array tiene elementos
         if (dataHijas && dataHijas.categorias && dataHijas.categorias.length > 0) {
-            // CASO 1: TIENE HIJAS -> Vamos a la pantalla intermedia
             router.push({
                 pathname: "/categorias/categoriasHijas",
                 params: {
                     externalPadre: item.external,
                     nombrePadre: item.nombre,
-                    externalParroquia: params.parroquiaExternal // Pasamos la parroquia para no perderla
+                    externalParroquia: params.parroquiaExternal 
                 }
             });
         } else {
-            // CASO 2: NO TIENE HIJAS -> Vamos directo a los lugares (Comportamiento original)
             router.push({
                 pathname: "/categorias/categoriaElegida", 
                 params: {
@@ -73,7 +57,6 @@ export default function CategoriasScreen() {
     } catch (error) {
         setLoadingCheck(false);
         console.error("Error verificando subcategorías", error);
-        // Si falla, por seguridad mandamos a lugares
         router.push({
             pathname: "/categorias/categoriaElegida", 
             params: {
@@ -86,16 +69,18 @@ export default function CategoriasScreen() {
   };
 
   const renderItem = ({ item }) => {
-    const { icon, color } = getAtributosCategoria(item.nombre);
+    // AQUÍ CONSUMIMOS DIRECTAMENTE DE LA BD (Con valores por defecto por seguridad)
+    const iconName = item.icono || 'grid';
+    const hexColor = item.color || '#78909C';
+
     return (
       <TouchableOpacity 
         style={styles.card}
         activeOpacity={0.7}
-        // Usamos la nueva función
         onPress={() => manejarNavegacion(item)}
       >
-        <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
-           <Ionicons name={icon as any} size={32} color={color} />
+        <View style={[styles.iconContainer, { backgroundColor: hexColor + '15' }]}>
+           <Ionicons name={iconName as any} size={32} color={hexColor} />
         </View>
         <Text style={styles.cardText}>{item.nombre}</Text>
       </TouchableOpacity>
@@ -106,7 +91,6 @@ export default function CategoriasScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#005bea" />
       
-      {/* Banner */}
       <View style={styles.banner}>
         <View style={styles.headerRow}>
             <TouchableOpacity 
@@ -128,14 +112,12 @@ export default function CategoriasScreen() {
         </Text>
       </View>
 
-      {/* Spinner de carga superpuesto para la navegación */}
       {loadingCheck && (
           <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color="#005bea" />
           </View>
       )}
 
-      {/* Condicional para mostrar el cargando inicial o el grid */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#005bea" />
@@ -162,22 +144,9 @@ const { width } = Dimensions.get('window');
 const cardSize = (width - 50) / 2; 
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F7FA', 
-  },
-  // Estilo para el contenedor de carga inicial
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#6c757d',
-    fontSize: 16,
-  },
-  // Estilo para el spinner de navegación (superpuesto)
+  container: { flex: 1, backgroundColor: '#F5F7FA' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 10, color: '#6c757d', fontSize: 16 },
   loadingOverlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(255,255,255,0.5)', zIndex: 10,

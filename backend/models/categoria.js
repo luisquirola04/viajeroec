@@ -10,7 +10,14 @@ const Categoria = sequelize.define('Categoria', {
         unique: true,
     },
     estado: { type: DataTypes.BOOLEAN },
-
+icono: {
+  type: DataTypes.STRING,
+  defaultValue: 'grid' 
+},
+color: {
+  type: DataTypes.STRING,
+  defaultValue: '#78909C' 
+}
 },
     {
         tableName: 'categoria',
