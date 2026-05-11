@@ -6,6 +6,8 @@ import { useRouter, useParams } from "next/navigation";
 import { getCategoria, editarCategoria } from "@/hooks/ServiceCategoria"; 
 import Swal from "sweetalert2";
 import Link from "next/link";
+// IMPORTAMOS EL NUEVO COMPONENTE
+import IconPreview from "@/components/IconPreview"; 
 
 export default function EditarCategoria() {
   const router = useRouter();
@@ -172,7 +174,6 @@ export default function EditarCategoria() {
                                 </datalist>
                             </div>
 
-                            {/* CAMBIO AQUÍ: Input de texto para pegar el Hexadecimal */}
                             <div className="w-1/3">
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Color (Hex)</label>
                                 <div className="flex items-center gap-2">
@@ -195,6 +196,13 @@ export default function EditarCategoria() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* RENDERIZAMOS EL COMPONENTE DE PREVISUALIZACIÓN */}
+                        <IconPreview 
+                            nombre={formData.nombre} 
+                            icono={formData.icono} 
+                            color={formData.color} 
+                        />
 
                         <button 
                             type="submit" 

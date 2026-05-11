@@ -9,6 +9,8 @@ import {
   listarCategoria 
 } from "@/hooks/ServiceCategoria"; 
 import { useRouter } from 'next/navigation';
+// IMPORTAMOS EL NUEVO COMPONENTE
+import IconPreview from "@/components/IconPreview"; 
 
 export default function CrearCategoriaForm() {
   const [loading, setLoading] = useState(false);
@@ -152,7 +154,6 @@ export default function CrearCategoriaForm() {
                 </datalist>
               </div>
 
-              {/* CAMBIO AQUÍ: Input de texto para pegar el Hexadecimal */}
               <div className="w-1/3">
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Color (Hex)
@@ -197,10 +198,17 @@ export default function CrearCategoriaForm() {
               </p>
             </div>
 
+            {/* RENDERIZAMOS EL COMPONENTE DE PREVISUALIZACIÓN */}
+            <IconPreview 
+              nombre={nombre} 
+              icono={icono} 
+              color={color} 
+            />
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl text-white font-bold shadow-lg bg-gradient-to-r from-teal-600 to-emerald-500 hover:shadow-teal-500/30 transform hover:-translate-y-1 transition-all"
+              className="w-full py-3 rounded-xl text-white font-bold shadow-lg bg-gradient-to-r from-teal-600 to-emerald-500 hover:shadow-teal-500/30 transform hover:-translate-y-1 transition-all mt-4"
             >
               Guardar Categoría
             </button>
