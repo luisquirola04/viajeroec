@@ -85,6 +85,7 @@ class CantonController {
       }
       const cantones = await Canton.findAll({
         where: { estado: true, provinciaId: provincia.id },
+        order: [['nombre', 'ASC']],
         include: [
           {
             model: Provincia,

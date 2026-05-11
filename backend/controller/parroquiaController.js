@@ -93,6 +93,7 @@ class ParroquiaController {
       }
       const parroquias = await Parroquia.findAll({
         where: { estado: true, cantonId: canton.id },
+        order: [['nombre', 'ASC']],
         include: [
           {
             model: Canton,

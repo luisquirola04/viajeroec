@@ -113,6 +113,7 @@ class ProvinciaController {
     try {
         const provincias = await Provincia.findAll({
         where: { estado: true, paisId: ec.id },
+        order: [['nombre', 'ASC']],
         include: [
           {
             model: Pais,

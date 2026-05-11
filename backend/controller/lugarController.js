@@ -384,6 +384,7 @@ class LugarController {
 
       const lugares = await Lugar.findAll({
         where: { estado: true },
+        order: [['nombre', 'ASC']],
         attributes: ['id', 'external', 'nombre', 'descripcion', 'horario', 'latitud', 'longitud'],
         include: [
           {
