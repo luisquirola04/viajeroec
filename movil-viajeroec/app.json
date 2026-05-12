@@ -3,7 +3,7 @@
     "name": "Viajero Ec",
     "slug": "movil-viajeroec",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "movilviajeroec",
     "userInterfaceStyle": "automatic",

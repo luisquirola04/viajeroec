@@ -7,7 +7,6 @@ import {
     ActionSheetIOS,
     ActivityIndicator,
     Alert,
-    Dimensions,
     FlatList,
     Linking,
     Modal,
@@ -17,12 +16,12 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
+    useWindowDimensions
 } from 'react-native';
+import ImageZoom from 'react-native-image-pan-zoom';
 import { WebView } from 'react-native-webview';
 import { obtenerLugar } from '../../services/ApiServices';
-
-const { width, height } = Dimensions.get('window');
 
 // --- DETECCIÓN DE YOUTUBE ---
 const esYouTube = (url: string): boolean => {
@@ -63,6 +62,16 @@ const obtenerVideoOptimizado = (url: string) => {
     return secureUrl;
 };
 
+// --- FORMATEO DE HORARIO ---
+const formatearHorario = (horario: string) => {
+    if (!horario) return 'Horario no disponible';
+    if (horario.includes('00:00 a 00:00')) {
+        return horario.replace('de 00:00 a 00:00', '(Abierto las 24 horas)')
+                      .replace('00:00 a 00:00', 'Abierto las 24 horas');
+    }
+    return horario;
+};
+
 // --- Componente imagen con loading ---
 const ImagenConCarga = ({ uri, style }: { uri: string; style: any }) => {
     const [cargando, setCargando] = useState(true);
@@ -92,12 +101,12 @@ const VideoBadge = () => (
     </View>
 );
 
-const GalleryItem = ({ item, onPress }: { item: any; onPress: () => void }) => {
+const GalleryItem = ({ item, onPress, windowWidth }: { item: any; onPress: () => void; windowWidth: number }) => {
     const isVid = esVideo(item);
     return (
-        <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={{ width, height: 260 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={{ width: windowWidth, height: 260 }}>
             {isVid ? (
-                <View style={{ width, height: 260, backgroundColor: '#111', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: windowWidth, height: 260, backgroundColor: '#111', justifyContent: 'center', alignItems: 'center' }}>
                     {item.thumbnail ? (
                         <Image
                             source={{ uri: item.thumbnail }}
@@ -115,7 +124,7 @@ const GalleryItem = ({ item, onPress }: { item: any; onPress: () => void }) => {
                     </View>
                 </View>
             ) : (
-                <ImagenConCarga uri={item.url} style={{ width, height: 260 }} />
+                <ImagenConCarga uri={item.url} style={{ width: windowWidth, height: 260 }} />
             )}
         </TouchableOpacity>
     );
@@ -123,9 +132,9 @@ const GalleryItem = ({ item, onPress }: { item: any; onPress: () => void }) => {
 
 // -------------------------------------------------------------------
 // PLAYER REAL: solo se monta cuando el usuario toca play.
-// useVideoPlayer aquí → la descarga inicia únicamente en ese momento.
 // -------------------------------------------------------------------
 const VideoPlayerActivo = ({ uri }: { uri: string }) => {
+    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const [cargando, setCargando] = useState(true);
     const uriOptimizada = obtenerVideoOptimizado(uri);
 
@@ -142,7 +151,7 @@ const VideoPlayerActivo = ({ uri }: { uri: string }) => {
     }, [player]);
 
     return (
-        <View style={{ width, height: height * 0.75, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+        <View style={{ width: windowWidth, height: windowHeight * 0.75, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
             <VideoView
                 player={player}
                 style={{ width: '100%', height: '100%' }}
@@ -170,9 +179,9 @@ const VideoPlayerActivo = ({ uri }: { uri: string }) => {
 
 // -------------------------------------------------------------------
 // WRAPPER LAZY: muestra thumbnail + botón play.
-// Solo cuando el usuario toca, monta VideoPlayerActivo e inicia la descarga.
 // -------------------------------------------------------------------
 const VideoItem = ({ uri, thumbnail }: { uri: string; thumbnail?: string }) => {
+    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const [reproduciendo, setReproduciendo] = useState(false);
 
     if (reproduciendo) {
@@ -183,7 +192,7 @@ const VideoItem = ({ uri, thumbnail }: { uri: string; thumbnail?: string }) => {
         <TouchableOpacity
             activeOpacity={0.85}
             onPress={() => setReproduciendo(true)}
-            style={{ width, height: height * 0.75, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}
+            style={{ width: windowWidth, height: windowHeight * 0.75, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}
         >
             {thumbnail ? (
                 <Image
@@ -195,7 +204,6 @@ const VideoItem = ({ uri, thumbnail }: { uri: string; thumbnail?: string }) => {
             ) : (
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1a1a2e' }]} />
             )}
-            {/* Overlay para que el ícono resalte sobre la miniatura */}
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.38)' }]} />
             <View style={{ alignItems: 'center' }}>
                 <Ionicons name="play-circle" size={80} color="rgba(255,255,255,0.92)" />
@@ -219,6 +227,7 @@ const GaleriaModal = ({
     initialIndex: number;
     onClose: () => void;
 }) => {
+    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const flatListRef = useRef<FlatList>(null);
 
@@ -242,10 +251,10 @@ const GaleriaModal = ({
         const uriOptimizadaModal = obtenerUrlAltaCalidad(item.url);
 
         return (
-            <View style={{ width, height, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+            <View style={{ width: windowWidth, height: windowHeight, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
                 {isVid ? (
                     esYouTube(item.url) ? (
-                        <View style={{ width, height: height * 0.75, justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={{ width: windowWidth, height: windowHeight * 0.75, justifyContent: 'center', alignItems: 'center' }}>
                             {item.thumbnail ? (
                                 <Image
                                     source={{ uri: item.thumbnail }}
@@ -256,7 +265,6 @@ const GaleriaModal = ({
                                 <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1a1a2e' }]} />
                             )}
                             
-                            {/* Capa oscura para resaltar el botón */}
                             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)' }]} />
                             
                             <Ionicons name="logo-youtube" size={70} color="#FF0000" style={{ marginBottom: 15 }} />
@@ -283,17 +291,25 @@ const GaleriaModal = ({
                             </TouchableOpacity>
                         </View>
                     ) : (
-                        // Pasamos thumbnail para que el estado inicial tenga miniatura
                         <VideoItem uri={item.url} thumbnail={item.thumbnail} />
                     )
                 ) : (
-                    <Image
-                        source={{ uri: uriOptimizadaModal }}
-                        style={{ width, height: height * 0.85 }}
-                        contentFit="contain"
-                        transition={200}
-                        cachePolicy="memory-disk"
-                    />
+                    // Integración de ImageZoom responsivo para las fotos
+                    <ImageZoom 
+                        cropWidth={windowWidth}
+                        cropHeight={windowHeight}
+                        imageWidth={windowWidth}
+                        imageHeight={windowHeight * 0.85}
+                        enableSwipeDown={false} 
+                    >
+                        <Image
+                            source={{ uri: uriOptimizadaModal }}
+                            style={{ width: '100%', height: '100%' }}
+                            contentFit="contain"
+                            transition={200}
+                            cachePolicy="memory-disk"
+                        />
+                    </ImageZoom>
                 )}
             </View>
         );
@@ -311,7 +327,7 @@ const GaleriaModal = ({
                         {currentIndex + 1} / {items.length}
                     </Text>
                 </View>
-                {esVideo(items[currentIndex]) && (
+                {items[currentIndex] && esVideo(items[currentIndex]) && (
                     <View style={styles.modalTypeBadge}>
                         <Ionicons
                             name={esYouTube(items[currentIndex].url) ? 'logo-youtube' : 'videocam'}
@@ -332,7 +348,7 @@ const GaleriaModal = ({
                     onViewableItemsChanged={onViewableItemsChanged}
                     viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
                     initialScrollIndex={initialIndex}
-                    getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+                    getItemLayout={(_, index) => ({ length: windowWidth, offset: windowWidth * index, index })}
                     removeClippedSubviews
                 />
                 {items.length > 1 && (
@@ -386,6 +402,7 @@ const GaleriaModal = ({
 // PANTALLA PRINCIPAL
 // ============================================================
 export default function LugarDetalleScreen() {
+    const { width: windowWidth } = useWindowDimensions();
     const [lugar, setLugar] = useState<any>(null);
     const [activeSlide, setActiveSlide] = useState(0);
     const [modalVisible, setModalVisible] = useState(false);
@@ -498,10 +515,15 @@ export default function LugarDetalleScreen() {
                     >
                         {multimedia.length > 0 ? (
                             multimedia.map((item: any, index: number) => (
-                                <GalleryItem key={index} item={item} onPress={() => abrirGaleria(index)} />
+                                <GalleryItem 
+                                    key={index} 
+                                    item={item} 
+                                    onPress={() => abrirGaleria(index)} 
+                                    windowWidth={windowWidth} 
+                                />
                             ))
                         ) : (
-                            <View style={[{ width, height: 260 }, styles.placeholderImage]}>
+                            <View style={[{ width: windowWidth, height: 260 }, styles.placeholderImage]}>
                                 <Ionicons name="image-outline" size={50} color="#ccc" />
                                 <Text style={{ color: '#ccc', marginTop: 8 }}>Sin imágenes</Text>
                             </View>
@@ -548,7 +570,7 @@ export default function LugarDetalleScreen() {
                         {lugar.horario && (
                             <View style={styles.infoRow}>
                                 <Ionicons name="time" size={22} color="#005bea" />
-                                <Text style={styles.infoText}>{lugar.horario}</Text>
+                                <Text style={styles.infoText}>{formatearHorario(lugar.horario)}</Text>
                             </View>
                         )}
                         <View style={styles.infoRow}>

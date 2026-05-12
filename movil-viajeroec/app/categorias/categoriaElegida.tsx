@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View, Animated } from 'react-native';
+import { ActivityIndicator, Animated, FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { listarLugaresCategoriaParroquia } from '../../services/ApiServices';
 
 // --- NUEVO COMPONENTE DE TARJETA ANIMADA ---
