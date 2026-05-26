@@ -187,7 +187,7 @@ console.log(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME);
                                     : 'bg-gradient-to-r from-teal-600 to-emerald-500 hover:shadow-teal-500/30'
                                 }`}
                             >
-                                {loading ? 'Procesando...' : 'Crear País'}
+                                {loading ? 'Procesando...' : 'Guardar País'}
                             </button>
                         </div>
 

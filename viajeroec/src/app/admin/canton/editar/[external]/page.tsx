@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useRouter, useParams } from "next/navigation";
 import { getCanton, editarCanton } from "@/hooks/ServiceCanton"; 
+import { listarProvincia } from "@/hooks/ServiceProvincia"; // <-- 1. Importamos el servicio
 import Swal from "sweetalert2";
 import Link from "next/link";
 
@@ -12,15 +13,34 @@ export default function EditarCanton() {
   const { external } = useParams(); 
   
   const [loading, setLoading] = useState(true);
+  const [listaProvincias, setListaProvincias] = useState([]); // <-- 2. Estado para provincias
+
   const [formData, setFormData] = useState({
     nombre: "",
     info: "",
+    externalProvincia: "", // <-- Agregamos este campo al estado
     externalCanton: external 
   });
 
   useEffect(() => {
-    if (external) cargarCanton();
+    if (external) {
+        cargarProvincias(); // <-- Cargamos provincias al montar
+        cargarCanton();
+    }
   }, [external]);
+
+  // Función para cargar provincias
+  const cargarProvincias = async () => {
+    const token = sessionStorage.getItem("token");
+    try {
+        const respuesta = await listarProvincia(token);
+        if (respuesta && respuesta.provincias) {
+            setListaProvincias(respuesta.provincias);
+        }
+    } catch (error) {
+        console.error("Error cargando provincias:", error);
+    }
+  };
 
   const cargarCanton = async () => {
     const token = sessionStorage.getItem("token");
@@ -43,6 +63,8 @@ export default function EditarCanton() {
         setFormData({
             nombre: c.nombre || "",
             info: c.info || "",
+            // Asegúrate de que c.provincia?.external o c.externalProvincia sea como tu API te devuelve la provincia
+            externalProvincia: c.provincia?.external || c.externalProvincia || c.provincia || "", 
             externalCanton: external 
         });
       } else {
@@ -57,18 +79,16 @@ export default function EditarCanton() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = sessionStorage.getItem("token");
-    console.log("1. token:", token);
-    console.log("2. formData:", formData);
-    console.log("3. external del param:", external);
-    if (!formData.nombre || !formData.info) {
-        Swal.fire("Atención", "Los campos Nombre e Información son obligatorios", "warning");
+    
+    if (!formData.nombre || !formData.info || !formData.externalProvincia) {
+        Swal.fire("Atención", "Todos los campos son obligatorios", "warning");
         return;
     }
 
@@ -76,7 +96,7 @@ export default function EditarCanton() {
 
     try {
         const respuesta = await editarCanton(token, formData);
-        if (respuesta && respuesta.code === 200) {
+        if (respuesta && (respuesta.code === 200 || respuesta.status === 200)) {
             await Swal.fire('¡Éxito!', 'Cantón actualizado correctamente.', 'success');
             router.push("/admin/canton/lista");
         } else {
@@ -93,7 +113,7 @@ export default function EditarCanton() {
 
       <main className="flex-1 p-6 md:p-10 overflow-y-auto h-screen flex justify-center">
         <div className="w-full max-w-2xl">
-            <Link href="/admin/canton" className="text-teal-600 hover:text-teal-800 flex items-center gap-2 mb-6 font-medium">
+            <Link href="/admin/canton/lista" className="text-teal-600 hover:text-teal-800 flex items-center gap-2 mb-6 font-medium">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 Volver
             </Link>
@@ -105,6 +125,8 @@ export default function EditarCanton() {
                     <div className="text-center py-10 text-slate-500">Cargando datos del cantón...</div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        
+                        {/* Campo Nombre */}
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Nombre del Cantón</label>
                             <input 
@@ -116,6 +138,31 @@ export default function EditarCanton() {
                             />
                         </div>
 
+                        {/* SELECT PROVINCIA (Agregado) */}
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Provincia Perteneciente</label>
+                            <div className="relative">
+                                <select 
+                                    name="externalProvincia"
+                                    required 
+                                    className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none appearance-none cursor-pointer text-slate-700 transition-all"
+                                    value={formData.externalProvincia}
+                                    onChange={handleChange}
+                                >
+                                    <option value="">-- Selecciona Provincia --</option>
+                                    {listaProvincias.map((prov) => (
+                                        <option key={prov.external} value={prov.external}>
+                                            {prov.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Campo Descripción */}
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Descripción Completa</label>
                             <textarea 

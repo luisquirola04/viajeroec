@@ -333,7 +333,7 @@ export default function ListaLugares() {
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
+      confirmButtonText: 'Sí, continuar',
       cancelButtonText: 'Cancelar'
     });
 

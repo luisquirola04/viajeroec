@@ -147,7 +147,7 @@ export default function EditarPais() {
                         </div>
 
                         <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-teal-500/30 transition-all active:scale-95 mt-4">
-                            Actualizar Información del País
+                            Actualizar País
                         </button>
                     </form>
                 )}
